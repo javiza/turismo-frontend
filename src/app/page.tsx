@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { ArrowRight, MapPin, Percent, CalendarDays, Compass, Eye, Heart, Star, Building2 } from "lucide-react";
 import { callBackend } from "@/lib/backend";
@@ -7,7 +8,6 @@ import { Card } from "@/components/ui/card";
 import { PaqueteAcciones } from "@/components/paquetes/paquete-acciones";
 import { PrecioPaquete } from "@/components/paquetes/precio-paquete";
 import { DestinoAcciones } from "@/components/destinos/destino-acciones";
-import { SkyBackground } from "@/components/shared/sky-background";
 import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
 import { Carrusel, CarruselItem } from "@/components/shared/carrusel";
 import type { Destino, Paquete, Oferta, ContenidoHome } from "@/types";
@@ -34,16 +34,28 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-white">
-        <SkyBackground />
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-16 pb-28 sm:pt-24 sm:pb-36">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white text-clay-700 text-xs font-medium px-3 py-1 mb-6 border border-sun-200 shadow-sm">
+      <section className="relative overflow-hidden bg-ink-900">
+        {/* Foto de fondo (playa) con overlay oscuro para que el texto blanco
+            se lea bien encima, al estilo de un hero de agencia de turismo. */}
+        <Image
+          src="/images/hero-playa.webp"
+          alt=""
+          fill
+          priority
+          aria-hidden="true"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink-900/90 via-ink-900/55 to-ink-900/25" />
+        <div className="absolute inset-0 bg-gradient-to-r from-ink-900/70 via-ink-900/10 to-transparent" />
+
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-16 pb-28 sm:pt-24 sm:pb-36">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur text-clay-700 text-xs font-medium px-3 py-1 mb-6 border border-white/50 shadow-sm">
             Nuevas rutas cada temporada
           </span>
-          <h1 className="font-display text-4xl sm:text-6xl font-semibold text-ink-900 max-w-2xl leading-[1.05]">
+          <h1 className="font-display text-4xl sm:text-6xl font-semibold text-white max-w-2xl leading-[1.05] drop-shadow-sm">
             {contenido?.titulo || "Programa tus vacaciones con nosotros"}
           </h1>
-          <p className="mt-6 text-lg text-ink-600 max-w-xl">
+          <p className="mt-6 text-lg text-white/90 max-w-xl drop-shadow-sm">
             {contenido?.subtitulo ||
               "Arma tu próximo viaje con destinos, paquetes y ofertas curadas por nuestro equipo — todo reservable en minutos."}
           </p>
@@ -59,7 +71,7 @@ export default async function HomePage() {
               </Button>
             </Link>
             <Link href="/proveedores">
-              <Button size="lg" variant="ghost">
+              <Button size="lg" variant="ghost" className="!text-white hover:!bg-white/10">
                 <Building2 className="size-4" />
                 Contacto proveedores
               </Button>

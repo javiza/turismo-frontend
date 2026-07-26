@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -77,6 +78,24 @@ export default function DashboardClientePage() {
             Hola, {perfil?.nombre ?? "..."}
           </h1>
           <p className="text-sm text-ink-600">{perfil?.email}</p>
+        </div>
+      </div>
+
+      {/* Banner con foto de playa, arriba de las secciones de servicios
+          (reservas / cotizaciones) — mismo look del hero del home. */}
+      <div className="relative mb-10 h-40 sm:h-52 rounded-card overflow-hidden">
+        <Image
+          src="/images/hero-playa.webp"
+          alt=""
+          fill
+          aria-hidden="true"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink-900/70 via-ink-900/20 to-transparent" />
+        <div className="relative h-full flex items-end p-5">
+          <p className="font-display text-lg sm:text-xl font-semibold text-white drop-shadow-sm">
+            Tus próximas vacaciones empiezan aquí
+          </p>
         </div>
       </div>
 
