@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { Percent } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Card } from "@/components/ui/card";
@@ -39,7 +39,7 @@ export default async function OfertasPage() {
                     <GaleriaLightbox imagenes={o.imagenes} imagenPrincipal={o.imagenPrincipal} nombre={o.titulo}>
                       <div className="relative h-40 bg-sun-100">
                         {o.imagenPrincipal && (
-                          <Image src={o.imagenPrincipal} alt={o.titulo} fill className="object-cover" />
+                          <ImagenSegura src={o.imagenPrincipal} alt={o.titulo} fill className="object-cover" />
                         )}
                       </div>
                     </GaleriaLightbox>

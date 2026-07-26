@@ -99,6 +99,10 @@ export interface ResenaHome {
 export interface ContenidoHome {
   id: number;
   nombreAgencia: string;
+  logoUrl: string | null;
+  sloganColor: string;
+  sloganFontFamily: string;
+  sloganFontUrl: string | null;
   titulo: string;
   subtitulo: string;
   presentacion: string;
@@ -106,6 +110,9 @@ export interface ContenidoHome {
   vision: string;
   valores: string;
   resenas: ResenaHome[];
+  telefono: string | null;
+  correo: string | null;
+  direccion: string | null;
   updatedAt: string;
 }
 

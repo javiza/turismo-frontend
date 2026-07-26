@@ -48,9 +48,9 @@ import type {
 
 const CHART_COLORS = {
   confirmados: "#4d9c5c", // success
-  pendientes: "#ffb92e", // sun-400
+  pendientes: "#8ec7ff", // sun-400
   cancelados: "#d9432f", // danger
-  primary: "#e8621a", // clay-500
+  primary: "#3b82f6", // clay-500
 };
 
 const TIPOS_MOVIMIENTO: { value: TipoMovimientoFinanciero; label: string }[] = [

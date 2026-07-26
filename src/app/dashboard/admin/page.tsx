@@ -26,8 +26,8 @@ import type {
 } from "@/types";
 
 const CHART_COLORS = {
-  primary: "#e8621a", // clay-500
-  secondary: "#ffb92e", // sun-400
+  primary: "#3b82f6", // clay-500
+  secondary: "#8ec7ff", // sun-400
 };
 
 export default function AdminAnalyticsPage() {

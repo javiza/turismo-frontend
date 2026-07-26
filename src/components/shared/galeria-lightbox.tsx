@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { X, ChevronLeft, ChevronRight, Images } from "lucide-react";
 import type { ImagenGaleria } from "@/types";
 
@@ -63,7 +63,17 @@ export function GaleriaLightbox({
           setIndice(0);
           setAbierta(true);
         }}
-        className={`relative block w-full text-left cursor-zoom-in ${className ?? ""}`}
+        // Sin className propio (uso por defecto en las grillas de
+        // destinos/paquetes/ofertas), el trigger ocupa todo el ancho de
+        // la card para que la imagen de portada (con `fill`) se vea
+        // completa. Cuando el caller SÍ pasa className (ej. la miniatura
+        // fija "size-16 shrink-0" en el dashboard del cliente), lo
+        // respetamos tal cual: agregar "w-full" igual generaba un
+        // conflicto de utilidades de ancho en Tailwind y el botón
+        // terminaba ocupando todo el espacio disponible del flex en vez
+        // del tamaño fijo pedido, empujando el texto de al lado a una
+        // columna angosta.
+        className={`relative block text-left cursor-zoom-in ${className ?? "w-full"}`}
         aria-label={`Ver fotos de ${nombre}`}
       >
         {children}
@@ -98,7 +108,7 @@ export function GaleriaLightbox({
             className="relative w-full max-w-3xl aspect-[4/3]"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
+            <ImagenSegura
               src={urls[indice]}
               alt={`${nombre} — foto ${indice + 1} de ${urls.length}`}
               fill

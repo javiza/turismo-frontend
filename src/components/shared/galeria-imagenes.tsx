@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import type { ImagenGaleria } from "@/types";
 
-type Carpeta = "destinos" | "paquetes" | "ofertas" | "contenido";
+export type Carpeta = "destinos" | "paquetes" | "ofertas" | "contenido";
 
 /**
  * Botón + input[type=file] oculto para subir una imagen desde el
@@ -19,7 +19,7 @@ type Carpeta = "destinos" | "paquetes" | "ofertas" | "contenido";
  * callback `onSubido(url)` para que cada modo (local/remota) decida qué
  * hacer con la URL resultante.
  */
-function BotonSubirArchivo({
+export function BotonSubirArchivo({
   carpeta,
   onSubido,
   disabled,

@@ -1,11 +1,22 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import {
+  Fraunces,
+  Inter,
+  Caveat,
+  Dancing_Script,
+  Pacifico,
+  Sacramento,
+  Shadows_Into_Light,
+} from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { callBackend } from "@/lib/backend";
+import { NOMBRE_FUENTE_CUSTOM, resolverFontFamilySlogan } from "@/lib/slogan-fonts";
 import type { ContenidoHome } from "@/types";
+
+// @ts-ignore: CSS module declarations may be missing in the project typings
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -17,6 +28,44 @@ const fraunces = Fraunces({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+});
+
+// Tipografía "a mano alzada" para el slogan que acompaña al logo
+// (Navbar/Footer). Se pidió específicamente que ese texto se vea
+// manuscrito y no con la tipografía del resto del sitio.
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-hand-caveat",
+  weight: ["500", "600", "700"],
+});
+
+// Alternativas manuscritas seleccionables por el admin para el slogan
+// (ver src/lib/slogan-fonts.ts). Cada una define su propia CSS variable;
+// solo se aplica la que corresponda según sloganFontFamily, pero
+// cargarlas todas acá permite que next/font las optimice/precargue como
+// con Caveat.
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  variable: "--font-hand-dancing-script",
+  weight: ["500", "600", "700"],
+});
+
+const pacifico = Pacifico({
+  subsets: ["latin"],
+  variable: "--font-hand-pacifico",
+  weight: ["400"],
+});
+
+const sacramento = Sacramento({
+  subsets: ["latin"],
+  variable: "--font-hand-sacramento",
+  weight: ["400"],
+});
+
+const shadowsIntoLight = Shadows_Into_Light({
+  subsets: ["latin"],
+  variable: "--font-hand-shadows",
+  weight: ["400"],
 });
 
 // El nombre de la agencia se lee del contenido editable del panel admin
@@ -33,13 +82,46 @@ const inter = Inter({
 // Next reutiliza la misma respuesta cacheada entre generateMetadata,
 // RootLayout y page.tsx durante esa ventana — de 2-3 llamadas sin caché
 // por visita a, en la práctica, 0 la mayoría de las veces.
-async function getNombreAgencia(): Promise<string> {
-  const res = await callBackend<ContenidoHome>("/contenido-home", { revalidate: 60 });
-  return res.ok && res.data.nombreAgencia ? res.data.nombreAgencia : "Tu Agencia de Viajes";
+async function getContenidoBasico(): Promise<{
+  nombreAgencia: string;
+  logoUrl: string | null;
+  sloganColor: string;
+  sloganFontFamily: string;
+  sloganFontUrl: string | null;
+  telefono: string | null;
+  correo: string | null;
+  direccion: string | null;
+}> {
+  const res = await callBackend<ContenidoHome>("/contenido-home", {
+    revalidate: 60,
+    tags: ["contenido-home"],
+  });
+  if (!res.ok) {
+    return {
+      nombreAgencia: "Tu Agencia de Viajes",
+      logoUrl: null,
+      sloganColor: "#c2410c",
+      sloganFontFamily: "caveat",
+      sloganFontUrl: null,
+      telefono: null,
+      correo: null,
+      direccion: null,
+    };
+  }
+  return {
+    nombreAgencia: res.data.nombreAgencia || "Tu Agencia de Viajes",
+    logoUrl: res.data.logoUrl || null,
+    sloganColor: res.data.sloganColor || "#c2410c",
+    sloganFontFamily: res.data.sloganFontFamily || "caveat",
+    sloganFontUrl: res.data.sloganFontUrl || null,
+    telefono: res.data.telefono || null,
+    correo: res.data.correo || null,
+    direccion: res.data.direccion || null,
+  };
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const nombreAgencia = await getNombreAgencia();
+  const { nombreAgencia } = await getContenidoBasico();
   return {
     title: `${nombreAgencia} | Agencia de Turismo`,
     description: "Encuentra tu próximo destino, paquete u oferta de viaje.",
@@ -47,15 +129,55 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nombreAgencia = await getNombreAgencia();
+  const {
+    nombreAgencia,
+    logoUrl,
+    sloganColor,
+    sloganFontFamily,
+    sloganFontUrl,
+    telefono,
+    correo,
+    direccion,
+  } = await getContenidoBasico();
+
+  const sloganFontValue = resolverFontFamilySlogan(sloganFontFamily, sloganFontUrl);
 
   return (
-    <html lang="es" className={`${fraunces.variable} ${inter.variable}`}>
+    <html
+      lang="es"
+      className={`${fraunces.variable} ${inter.variable} ${caveat.variable} ${dancingScript.variable} ${pacifico.variable} ${sacramento.variable} ${shadowsIntoLight.variable}`}
+    >
       <body className="min-h-screen flex flex-col antialiased">
+        {/* Tipografía propia subida por el admin para el slogan (si la
+            hay): se declara acá porque la URL es dinámica (dato de BD),
+            así que no puede resolverse en build time como los next/font
+            de arriba. */}
+        {sloganFontUrl && (
+          <style>{`
+            @font-face {
+              font-family: "${NOMBRE_FUENTE_CUSTOM}";
+              src: url("${sloganFontUrl}");
+              font-display: swap;
+            }
+          `}</style>
+        )}
         <Providers>
-          <Navbar nombreAgencia={nombreAgencia} />
+          <Navbar
+            nombreAgencia={nombreAgencia}
+            logoUrl={logoUrl}
+            sloganColor={sloganColor}
+            sloganFontFamily={sloganFontValue}
+          />
           <main className="flex-1">{children}</main>
-          <Footer nombreAgencia={nombreAgencia} />
+          <Footer
+            nombreAgencia={nombreAgencia}
+            logoUrl={logoUrl}
+            sloganColor={sloganColor}
+            sloganFontFamily={sloganFontValue}
+            telefono={telefono}
+            correo={correo}
+            direccion={direccion}
+          />
           <Toaster position="top-right" richColors />
         </Providers>
       </body>

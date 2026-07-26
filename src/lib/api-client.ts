@@ -9,6 +9,24 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Nombre del evento que se dispara en `window` cuando el backend responde
+ * 401 a través del proxy /api/backend/* (ver [...path]/route.ts, que ya
+ * intenta refrescar el token una vez antes de devolver 401). Si llega
+ * hasta acá, la sesión realmente terminó (refresh token también vencido,
+ * o no hay sesión). Quien escuche este evento (ver
+ * hooks/use-session-expiry.ts) es responsable de limpiar la sesión y
+ * redirigir a login, para no dejar a las queries de polling (badges de
+ * "no leídas", analytics, etc.) reintentando 401 para siempre.
+ */
+export const EVENTO_SESION_EXPIRADA = "auth:session-expired";
+
+function notificarSesionExpirada() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(EVENTO_SESION_EXPIRADA));
+  }
+}
+
 function extractMessage(payload: unknown, fallback: string): string {
   if (payload && typeof payload === "object" && "message" in payload) {
     const msg = (payload as { message: string | string[] }).message;
@@ -35,6 +53,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   const data = text ? JSON.parse(text) : null;
 
   if (!res.ok) {
+    if (res.status === 401) {
+      notificarSesionExpirada();
+    }
     throw new ApiError(res.status, extractMessage(data, "Ocurrió un error inesperado"), data);
   }
 
@@ -64,6 +85,30 @@ export async function subirImagen(
 
   if (!res.ok) {
     throw new ApiError(res.status, extractMessage(data, "No se pudo subir la imagen"), data);
+  }
+
+  return data as { url: string };
+}
+
+/**
+ * Sube un archivo de tipografía (.ttf/.otf/.woff/.woff2) para el slogan
+ * de la home. Va aparte de subirImagen porque el backend valida
+ * extensión/tamaño distintos y lo sube como recurso "raw" a Cloudinary.
+ */
+export async function subirFuente(archivo: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+
+  const res = await fetch(`/api/backend/uploads/fuentes`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!res.ok) {
+    throw new ApiError(res.status, extractMessage(data, "No se pudo subir la tipografía"), data);
   }
 
   return data as { url: string };

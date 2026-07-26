@@ -8,8 +8,9 @@ export function useProveedoresNoLeidos() {
   const query = useQuery({
     queryKey: ["proveedores-no-leidos-count"],
     queryFn: () => apiFetch<{ count: number }>("/proveedores/no-leidos/count"),
-    refetchInterval: INTERVALO_MS,
+    refetchInterval: (query) => (query.state.error ? false : INTERVALO_MS),
     refetchOnWindowFocus: true,
+    retry: false,
     staleTime: 0,
   });
 

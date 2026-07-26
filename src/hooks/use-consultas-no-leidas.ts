@@ -23,8 +23,9 @@ export function useConsultasNoLeidas(opts?: { avisar?: boolean }) {
   const query = useQuery({
     queryKey: ["cotizaciones-no-leidas-count"],
     queryFn: () => apiFetch<{ count: number }>("/cotizaciones/no-leidas/count"),
-    refetchInterval: INTERVALO_MS,
+    refetchInterval: (query) => (query.state.error ? false : INTERVALO_MS),
     refetchOnWindowFocus: true,
+    retry: false,
     staleTime: 0,
   });
 

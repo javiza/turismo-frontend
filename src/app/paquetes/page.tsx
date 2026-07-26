@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { CalendarDays } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Card } from "@/components/ui/card";
@@ -26,7 +26,7 @@ export default async function PaquetesPage() {
               <GaleriaLightbox imagenes={p.imagenes} imagenPrincipal={p.imagenPrincipal} nombre={p.nombre}>
                 <div className="relative h-40 bg-sun-100">
                   {p.imagenPrincipal && (
-                    <Image src={p.imagenPrincipal} alt={p.nombre} fill className="object-cover" />
+                    <ImagenSegura src={p.imagenPrincipal} alt={p.nombre} fill className="object-cover" />
                   )}
                 </div>
               </GaleriaLightbox>

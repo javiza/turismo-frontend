@@ -22,12 +22,17 @@ export interface BackendResult<T = unknown> {
  * mantiene el comportamiento anterior — lo correcto para todo lo
  * autenticado o específico del usuario (dashboard, reservas, etc.), que
  * nunca debe servirse cacheado.
+ *
+ * `tags`: además de la ventana de tiempo, se puede invalidar el cache al
+ * instante desde un Route Handler con `revalidateTag(tag)` justo después
+ * de que el admin guarda un cambio (ver /api/revalidate/[tag]) — así el
+ * contenido se refresca en tiempo real en vez de esperar hasta 60s.
  */
 export async function callBackend<T = unknown>(
   path: string,
-  init?: RequestInit & { revalidate?: number },
+  init?: RequestInit & { revalidate?: number; tags?: string[] },
 ): Promise<BackendResult<T>> {
-  const { revalidate, ...rest } = init ?? {};
+  const { revalidate, tags, ...rest } = init ?? {};
 
   const res = await fetch(`${API_URL}${path}`, {
     ...rest,
@@ -36,7 +41,7 @@ export async function callBackend<T = unknown>(
       ...rest.headers,
     },
     ...(revalidate !== undefined
-      ? { next: { revalidate } }
+      ? { next: { revalidate, tags } }
       : { cache: "no-store" as const }),
   });
 

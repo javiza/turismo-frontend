@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { MapPin } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Card } from "@/components/ui/card";
@@ -25,7 +25,7 @@ export default async function DestinosPage() {
               <GaleriaLightbox imagenes={d.imagenes} imagenPrincipal={d.imagenPrincipal} nombre={d.nombre}>
                 <div className="relative h-44 bg-sun-100">
                   {d.imagenPrincipal && (
-                    <Image src={d.imagenPrincipal} alt={d.nombre} fill className="object-cover" />
+                    <ImagenSegura src={d.imagenPrincipal} alt={d.nombre} fill className="object-cover" />
                   )}
                 </div>
               </GaleriaLightbox>

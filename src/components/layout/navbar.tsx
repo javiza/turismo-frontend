@@ -6,8 +6,20 @@ import { Menu, X, Compass, User, LayoutDashboard, LogOut } from "lucide-react";
 import { useSessionStore } from "@/store/session-store";
 import { Button } from "@/components/ui/button";
 
-export function Navbar({ nombreAgencia = "Tu Agencia de Viajes" }: { nombreAgencia?: string }) {
+export function Navbar({
+  nombreAgencia = "Tu Agencia de Viajes",
+  logoUrl = null,
+  sloganColor = "#c2410c",
+  sloganFontFamily = "var(--font-hand-caveat)",
+}: {
+  nombreAgencia?: string;
+  logoUrl?: string | null;
+  sloganColor?: string;
+  /** Valor CSS `font-family` ya resuelto (ver resolverFontFamilySlogan en @/lib/slogan-fonts). */
+  sloganFontFamily?: string;
+}) {
   const [open, setOpen] = useState(false);
+  const [logoRoto, setLogoRoto] = useState(false);
   const { role, adminProfile, clienteProfile } = useSessionStore();
 
   async function handleLogout() {
@@ -19,10 +31,25 @@ export function Navbar({ nombreAgencia = "Tu Agencia de Viajes" }: { nombreAgenc
   return (
     <header className="sticky top-0 z-40 bg-cream/90 backdrop-blur border-b border-sun-200">
       <div className="h-[3px] bg-gradient-to-r from-clay-500 via-sun-400 to-ocean-500" />
-      <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold text-clay-600">
-          <Compass className="size-6" strokeWidth={1.75} />
-          {nombreAgencia}
+      <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-20 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3">
+          {logoUrl && !logoRoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={nombreAgencia}
+              className="h-12 w-auto max-w-[180px] object-contain"
+              onError={() => setLogoRoto(true)}
+            />
+          ) : (
+            <Compass className="size-8 text-clay-600" strokeWidth={1.75} />
+          )}
+          <span
+            className="text-2xl sm:text-3xl leading-none"
+            style={{ color: sloganColor, fontFamily: sloganFontFamily }}
+          >
+            {nombreAgencia}
+          </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-6 text-sm font-medium text-ink-800">

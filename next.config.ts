@@ -13,6 +13,13 @@ import type { NextConfig } from "next";
 // minimumCacheTTL para que, una vez optimizada una imagen, Next la sirva
 // desde caché mucho más tiempo en vez de reprocesarla seguido.
 const nextConfig: NextConfig = {
+  // Evita el warning "Next.js inferred your workspace root... Detected
+  // additional lockfiles" cuando existe otro package-lock.json fuera de
+  // este proyecto (ej. en el home del usuario): fijamos explícitamente
+  // cuál es la raíz en vez de dejar que Turbopack la adivine.
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     remotePatterns: [
       { protocol: "http", hostname: "localhost" },

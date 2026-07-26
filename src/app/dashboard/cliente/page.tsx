@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch, ApiError } from "@/lib/api-client";
@@ -102,7 +102,7 @@ export default function DashboardClientePage() {
                     className="size-16 shrink-0"
                   >
                     <div className="relative size-16 rounded-xl overflow-hidden shrink-0 bg-sun-100">
-                      <Image
+                      <ImagenSegura
                         src={r.paquete.imagenPrincipal}
                         alt={r.paquete.nombre}
                         fill

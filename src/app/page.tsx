@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { ArrowRight, MapPin, Percent, CalendarDays, Compass, Eye, Heart, Star, Building2 } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ async function getHomeData() {
     callBackend<Destino[]>("/destinos", { revalidate: 60 }),
     callBackend<Paquete[]>("/paquetes", { revalidate: 60 }),
     callBackend<Oferta[]>("/ofertas", { revalidate: 60 }),
-    callBackend<ContenidoHome>("/contenido-home", { revalidate: 60 }),
+    callBackend<ContenidoHome>("/contenido-home", { revalidate: 60, tags: ["contenido-home"] }),
   ]);
 
   return {
@@ -88,7 +88,7 @@ export default async function HomePage() {
                 <GaleriaLightbox imagenes={d.imagenes} imagenPrincipal={d.imagenPrincipal} nombre={d.nombre}>
                   <div className="relative h-44 bg-sun-100">
                     {d.imagenPrincipal && (
-                      <Image
+                      <ImagenSegura
                         src={d.imagenPrincipal}
                         alt={d.nombre}
                         fill
@@ -132,7 +132,7 @@ export default async function HomePage() {
                 <GaleriaLightbox imagenes={p.imagenes} imagenPrincipal={p.imagenPrincipal} nombre={p.nombre}>
                   <div className="relative h-40 bg-sun-100">
                     {p.imagenPrincipal && (
-                      <Image src={p.imagenPrincipal} alt={p.nombre} fill className="object-cover" />
+                      <ImagenSegura src={p.imagenPrincipal} alt={p.nombre} fill className="object-cover" />
                     )}
                   </div>
                 </GaleriaLightbox>
@@ -174,7 +174,7 @@ export default async function HomePage() {
                     <GaleriaLightbox imagenes={o.imagenes} imagenPrincipal={o.imagenPrincipal} nombre={o.titulo}>
                       <div className="relative h-36 bg-sun-100">
                         {o.imagenPrincipal && (
-                          <Image src={o.imagenPrincipal} alt={o.titulo} fill className="object-cover" />
+                          <ImagenSegura src={o.imagenPrincipal} alt={o.titulo} fill className="object-cover" />
                         )}
                       </div>
                     </GaleriaLightbox>
