@@ -8,6 +8,7 @@ import { apiFetch, ApiError } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useConsultasNoLeidas } from "@/hooks/use-consultas-no-leidas";
 import type { Cotizacion, EstadoCotizacion } from "@/types";
 
 const ESTADO_STYLES: Record<EstadoCotizacion, string> = {
@@ -25,7 +26,13 @@ export default function AdminConsultasClientesPage() {
   const { data: consultas, isLoading } = useQuery({
     queryKey: ["admin-cotizaciones"],
     queryFn: () => apiFetch<Cotizacion[]>("/cotizaciones"),
+    refetchInterval: 20_000,
   });
+
+  // Ticket de notificación visible: mientras esta página está abierta,
+  // avisa con un toast si llega una consulta nueva (además del correo
+  // que ya recibe el admin por fuera de la app).
+  useConsultasNoLeidas({ avisar: true });
 
   const actualizar = useMutation({
     mutationFn: ({

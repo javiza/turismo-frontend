@@ -215,7 +215,30 @@ export interface ResumenFinanciero {
   ingresosManuales: number;
   egresosManuales: number;
   perdidasManuales: number;
-  balanceTotal: number;
+  gananciasTotales: number;
+  gastosTotales: number;
+  porcentajeImpuesto: number;
+  impuestos: number;
+  gananciaNeta: number;
+}
+
+export interface ConfiguracionFinanciera {
+  id: number;
+  porcentajeImpuesto: number;
+  updatedAt: string;
+}
+
+export interface Proveedor {
+  id: number;
+  nombreNegocio: string;
+  rubro?: string;
+  nombreContacto: string;
+  correo: string;
+  telefono: string;
+  direccion?: string;
+  descripcion: string;
+  leido: boolean;
+  createdAt: string;
 }
 
 export type TipoMovimientoFinanciero =
@@ -226,14 +249,29 @@ export type TipoMovimientoFinanciero =
   | "PERDIDA"
   | "AJUSTE";
 
+export type CategoriaGasto =
+  | "OPERACIONAL"
+  | "SUELDOS"
+  | "MARKETING"
+  | "PROVEEDORES"
+  | "MANTENIMIENTO"
+  | "IMPUESTOS"
+  | "OTRO";
+
 export interface MovimientoFinanciero {
   id: number;
   tipo: TipoMovimientoFinanciero;
   monto: number;
   descripcion: string;
+  categoria?: CategoriaGasto | null;
   usuarioId?: number;
   usuario?: { id: number; nombre?: string; email?: string };
   createdAt: string;
+}
+
+export interface GastoPorCategoria {
+  categoria: CategoriaGasto | "SIN_CATEGORIA";
+  total: number;
 }
 
 export interface IngresoMensual {

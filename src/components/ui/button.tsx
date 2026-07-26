@@ -2,7 +2,7 @@ import { cn } from "@/lib/cn";
 import type { ButtonHTMLAttributes } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "accent" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
 }
 
@@ -10,7 +10,9 @@ const variants = {
   primary:
     "bg-clay-500 text-white hover:bg-clay-600 shadow-sm shadow-clay-500/20 focus-visible:outline-clay-600",
   secondary:
-    "bg-sun-200 text-ink-900 hover:bg-sun-300 focus-visible:outline-sun-500",
+    "bg-sun-300 text-ink-900 hover:bg-sun-400 focus-visible:outline-sun-600",
+  accent:
+    "bg-ocean-500 text-white hover:bg-ocean-600 shadow-sm shadow-ocean-500/20 focus-visible:outline-ocean-600",
   ghost: "bg-transparent text-ink-800 hover:bg-sun-100",
   danger: "bg-danger text-white hover:brightness-95",
 };

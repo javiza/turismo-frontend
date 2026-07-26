@@ -15,7 +15,11 @@ export {
   COOKIE_CLIENTE_REFRESH,
 };
 
-const ACCESS_MAX_AGE = 15 * 60; // 15 min, igual de conservador que JWT_ACCESS_EXPIRES
+const ACCESS_MAX_AGE = 30 * 60; // 30 min, igual a JWT_ACCESS_EXPIRES. El refresh
+// automático (ver lib/refresh.ts) ya cubre la renovación; este valor solo
+// necesita ser conservador, no mínimo — subirlo de 15 a 30 min reduce a la
+// mitad la frecuencia de refresh sin debilitar la ventana de exposición del
+// access token de forma relevante.
 const REFRESH_MAX_AGE = 7 * 24 * 60 * 60; // 7 días
 
 const baseCookie = {

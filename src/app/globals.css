@@ -1,30 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  /* ---- Paleta: "sunset templado" ----
-     Pensada para turismo: cálida como un atardecer, pero desaturada
-     para que se pueda leer big data y tablas sin cansar la vista. */
+  /* ---- Paleta: "sunset costero" ----
+     Naranja + amarillo + azul, pensada para turismo: cálida y llamativa
+     como un atardecer sobre el mar, pero sin perder sobriedad: los
+     acentos son vívidos, los textos y fondos siguen siendo neutros
+     (ink/cream) para que tablas y big data se sigan leyendo bien.
+
+     sun   = amarillo (acento cálido, CTAs secundarios, resaltados)
+     clay  = naranja (color de marca / acción primaria)
+     ocean = azul (tercer acento: info, enlaces secundarios, variedad
+             visual en gráficos y estados) */
   --color-sun-50: #fffaf0;
   --color-sun-100: #fff3d9;
   --color-sun-200: #ffe4ad;
-  --color-sun-300: #ffd27a;
-  --color-sun-400: #f2b84b;
-  --color-sun-500: #e8a33a;
-  --color-sun-600: #d98c2b;
-  --color-sun-700: #b56f22;
-  --color-sun-800: #8a561f;
+  --color-sun-300: #ffd066;
+  --color-sun-400: #ffb92e;
+  --color-sun-500: #f5a300;
+  --color-sun-600: #d98600;
+  --color-sun-700: #b06a00;
+  --color-sun-800: #8a521f;
   --color-sun-900: #5c3a16;
 
   --color-clay-50: #fff6f0;
   --color-clay-100: #ffe8da;
   --color-clay-200: #ffcfb0;
-  --color-clay-300: #ffab78;
-  --color-clay-400: #ef8a52;
-  --color-clay-500: #e07444;
-  --color-clay-600: #c15c33;
-  --color-clay-700: #9c4728;
+  --color-clay-300: #ff9f5c;
+  --color-clay-400: #f57a30;
+  --color-clay-500: #e8621a;
+  --color-clay-600: #c94f10;
+  --color-clay-700: #9c3f12;
   --color-clay-800: #713420;
   --color-clay-900: #4a2418;
+
+  --color-ocean-50: #eff9ff;
+  --color-ocean-100: #dcf1ff;
+  --color-ocean-200: #b7e2ff;
+  --color-ocean-300: #82ccff;
+  --color-ocean-400: #45adf5;
+  --color-ocean-500: #1c8fe0;
+  --color-ocean-600: #1272ba;
+  --color-ocean-700: #135b93;
+  --color-ocean-800: #164a76;
+  --color-ocean-900: #143e62;
 
   --color-ink-50: #faf7f2;
   --color-ink-100: #f0ebe1;
@@ -34,9 +52,9 @@
   --color-ink-900: #2a2118;
 
   --color-cream: #fffaf3;
-  --color-success: #6a9c6a;
-  --color-danger: #c9584a;
-  --color-info: #5c8ca8;
+  --color-success: #4d9c5c;
+  --color-danger: #d9432f;
+  --color-info: #1c8fe0;
 
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -49,7 +67,11 @@ html {
 }
 
 body {
-  background: var(--color-cream);
+  /* Fondo de pantalla general: degradado de blanco (arriba, por la
+     iluminación del sol) a celeste (abajo). `fixed` para que no se corte
+     ni se repita al hacer scroll en páginas largas. */
+  background: linear-gradient(180deg, #ffffff 0%, var(--color-cream) 30%, var(--color-ocean-100) 100%)
+    fixed;
   color: var(--color-ink-900);
   font-family: var(--font-sans);
 }
@@ -73,3 +95,21 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Fondo de cielo animado (halo de luz + nubes) para home y
+   dashboard de cliente — ver components/shared/sky-background.tsx ---- */
+@keyframes cloud-drift {
+  from { transform: translateX(-4%); }
+  to { transform: translateX(4%); }
+}
+@keyframes cloud-drift-reverse {
+  from { transform: translateX(3%); }
+  to { transform: translateX(-3%); }
+}
+@keyframes sun-glow-slow {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+.animate-sun-glow-slow { animation: sun-glow-slow 8s ease-in-out infinite; }
+.animate-cloud-drift { animation: cloud-drift 22s ease-in-out infinite alternate; }
+.animate-cloud-drift-slow { animation: cloud-drift-reverse 30s ease-in-out infinite alternate; }

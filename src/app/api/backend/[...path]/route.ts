@@ -20,17 +20,29 @@ async function forward(req: NextRequest, path: string[]) {
 
   const method = req.method;
   const hasBody = method !== "GET" && method !== "DELETE";
-  const body = hasBody ? await req.text() : undefined;
+
+  // Las subidas de imágenes (POST /uploads/...) llegan como
+  // multipart/form-data. Antes este proxy siempre leía el body con
+  // req.text() y forzaba Content-Type: application/json al reenviarlo,
+  // lo que corrompía el binario y perdía el boundary del multipart —
+  // por eso subir una foto desde el computador fallaba silenciosamente.
+  // Para cualquier body que no sea JSON, reenviamos el binario tal cual
+  // (arrayBuffer) y conservamos el Content-Type original (con su boundary).
+  const contentType = req.headers.get("content-type") ?? "application/json";
+  const isJson = contentType.includes("application/json");
+  const body = hasBody ? (isJson ? await req.text() : await req.arrayBuffer()) : undefined;
 
   async function doFetch(bearer?: string) {
     return fetch(`${API_URL}${targetPath}${search}`, {
       method,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": contentType,
         ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
       },
       body,
       cache: "no-store",
+      // @ts-expect-error -- requerido por undici para enviar bodies binarios de tamaño conocido
+      duplex: "half",
     });
   }
 

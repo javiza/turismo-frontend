@@ -175,6 +175,7 @@ export default function AdminDestinosPage() {
                 <GaleriaImagenesLocal
                   imagenes={imagenesNuevoDestino}
                   onChange={setImagenesNuevoDestino}
+                  carpeta="destinos"
                 />
               )}
             </div>

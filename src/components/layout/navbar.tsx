@@ -17,7 +17,8 @@ export function Navbar({ nombreAgencia = "Tu Agencia de Viajes" }: { nombreAgenc
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-cream/90 backdrop-blur border-b border-sun-100">
+    <header className="sticky top-0 z-40 bg-cream/90 backdrop-blur border-b border-sun-200">
+      <div className="h-[3px] bg-gradient-to-r from-clay-500 via-sun-400 to-ocean-500" />
       <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold text-clay-600">
           <Compass className="size-6" strokeWidth={1.75} />
@@ -39,7 +40,7 @@ export function Navbar({ nombreAgencia = "Tu Agencia de Viajes" }: { nombreAgenc
         <div className="hidden md:flex items-center gap-3">
           {role === "admin" && (
             <Link href="/dashboard/admin">
-              <Button variant="secondary" size="sm">
+              <Button variant="accent" size="sm">
                 <LayoutDashboard className="size-4" /> Panel admin
               </Button>
             </Link>

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -10,9 +12,15 @@ import {
   FileText,
   CalendarCheck,
   Wallet,
+  Building2,
 } from "lucide-react";
+import { useConsultasNoLeidas } from "@/hooks/use-consultas-no-leidas";
+import { useProveedoresNoLeidos } from "@/hooks/use-proveedores-no-leidos";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
+  const noLeidas = useConsultasNoLeidas();
+  const proveedoresNoLeidos = useProveedoresNoLeidos();
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 grid lg:grid-cols-[220px_1fr] gap-8">
       <aside className="lg:sticky lg:top-24 h-max">
@@ -76,6 +84,11 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           >
             <MessagesSquare className="size-4" />
             Consultas clientes
+            {noLeidas > 0 && (
+              <span className="ml-auto flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-clay-500 text-white text-[11px] font-semibold">
+                {noLeidas > 99 ? "99+" : noLeidas}
+              </span>
+            )}
           </Link>
           <Link
             href="/dashboard/admin/consultas"
@@ -83,6 +96,18 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           >
             <MailQuestion className="size-4" />
             Consultas IA
+          </Link>
+          <Link
+            href="/dashboard/admin/proveedores"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
+          >
+            <Building2 className="size-4" />
+            Proveedores
+            {proveedoresNoLeidos > 0 && (
+              <span className="ml-auto flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-clay-500 text-white text-[11px] font-semibold">
+                {proveedoresNoLeidos > 99 ? "99+" : proveedoresNoLeidos}
+              </span>
+            )}
           </Link>
         </nav>
       </aside>

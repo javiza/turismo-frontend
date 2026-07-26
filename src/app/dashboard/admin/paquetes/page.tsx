@@ -287,6 +287,7 @@ export default function AdminPaquetesPage() {
                 <GaleriaImagenesLocal
                   imagenes={imagenesNuevoPaquete}
                   onChange={setImagenesNuevoPaquete}
+                  carpeta="paquetes"
                 />
               )}
             </div>

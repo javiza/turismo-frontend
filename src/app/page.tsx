@@ -1,26 +1,29 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MapPin, Percent, CalendarDays, Compass, Eye, Heart, Star } from "lucide-react";
+import { ArrowRight, MapPin, Percent, CalendarDays, Compass, Eye, Heart, Star, Building2 } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PaqueteAcciones } from "@/components/paquetes/paquete-acciones";
 import { PrecioPaquete } from "@/components/paquetes/precio-paquete";
 import { DestinoAcciones } from "@/components/destinos/destino-acciones";
+import { SkyBackground } from "@/components/shared/sky-background";
+import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
+import { Carrusel, CarruselItem } from "@/components/shared/carrusel";
 import type { Destino, Paquete, Oferta, ContenidoHome } from "@/types";
 
 async function getHomeData() {
   const [destinos, paquetes, ofertas, contenido] = await Promise.all([
-    callBackend<Destino[]>("/destinos"),
-    callBackend<Paquete[]>("/paquetes"),
-    callBackend<Oferta[]>("/ofertas"),
-    callBackend<ContenidoHome>("/contenido-home"),
+    callBackend<Destino[]>("/destinos", { revalidate: 60 }),
+    callBackend<Paquete[]>("/paquetes", { revalidate: 60 }),
+    callBackend<Oferta[]>("/ofertas", { revalidate: 60 }),
+    callBackend<ContenidoHome>("/contenido-home", { revalidate: 60 }),
   ]);
 
   return {
     destinos: destinos.ok ? destinos.data.slice(0, 3) : [],
     paquetes: paquetes.ok ? paquetes.data.slice(0, 3) : [],
-    ofertas: ofertas.ok ? ofertas.data.slice(0, 2) : [],
+    ofertas: ofertas.ok ? ofertas.data.slice(0, 8) : [],
     contenido: contenido.ok ? contenido.data : null,
   };
 }
@@ -31,16 +34,10 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div
-          className="absolute inset-0 -z-10"
-          style={{
-            background:
-              "radial-gradient(ellipse at top left, var(--color-sun-100), transparent 60%), radial-gradient(ellipse at bottom right, var(--color-clay-100), transparent 55%)",
-          }}
-        />
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-16 pb-24 sm:pt-24 sm:pb-32">
-          <span className="inline-flex items-center gap-2 rounded-full bg-sun-200/70 text-clay-700 text-xs font-medium px-3 py-1 mb-6">
+      <section className="relative overflow-hidden bg-white">
+        <SkyBackground />
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-16 pb-28 sm:pt-24 sm:pb-36">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white text-clay-700 text-xs font-medium px-3 py-1 mb-6 border border-sun-200 shadow-sm">
             Nuevas rutas cada temporada
           </span>
           <h1 className="font-display text-4xl sm:text-6xl font-semibold text-ink-900 max-w-2xl leading-[1.05]">
@@ -59,6 +56,12 @@ export default async function HomePage() {
             <Link href="/paquetes">
               <Button size="lg" variant="secondary">
                 Ver paquetes
+              </Button>
+            </Link>
+            <Link href="/proveedores">
+              <Button size="lg" variant="ghost">
+                <Building2 className="size-4" />
+                Contacto proveedores
               </Button>
             </Link>
           </div>
@@ -82,16 +85,18 @@ export default async function HomePage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {destinos.map((d) => (
               <Card key={d.id} className="overflow-hidden group">
-                <div className="relative h-44 bg-sun-100">
-                  {d.imagenPrincipal && (
-                    <Image
-                      src={d.imagenPrincipal}
-                      alt={d.nombre}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  )}
-                </div>
+                <GaleriaLightbox imagenes={d.imagenes} imagenPrincipal={d.imagenPrincipal} nombre={d.nombre}>
+                  <div className="relative h-44 bg-sun-100">
+                    {d.imagenPrincipal && (
+                      <Image
+                        src={d.imagenPrincipal}
+                        alt={d.nombre}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
+                  </div>
+                </GaleriaLightbox>
                 <div className="p-5">
                   <div className="flex items-center gap-1.5 text-xs text-clay-600 font-medium mb-1.5">
                     <MapPin className="size-3.5" />
@@ -123,7 +128,15 @@ export default async function HomePage() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {paquetes.map((p) => (
-              <Card key={p.id} className="p-5 flex flex-col gap-3">
+              <Card key={p.id} className="overflow-hidden flex flex-col gap-3 p-0">
+                <GaleriaLightbox imagenes={p.imagenes} imagenPrincipal={p.imagenPrincipal} nombre={p.nombre}>
+                  <div className="relative h-40 bg-sun-100">
+                    {p.imagenPrincipal && (
+                      <Image src={p.imagenPrincipal} alt={p.nombre} fill className="object-cover" />
+                    )}
+                  </div>
+                </GaleriaLightbox>
+                <div className="px-5 pb-5 flex flex-col gap-3 flex-1">
                 <h3 className="font-display text-lg font-semibold text-ink-900">{p.nombre}</h3>
                 <p className="text-sm text-ink-600 line-clamp-2">{p.descripcion}</p>
                 <div className="flex items-center gap-1.5 text-xs text-ink-400">
@@ -135,6 +148,7 @@ export default async function HomePage() {
                   <span className="text-xs text-ink-400">{p.cupos} cupos</span>
                 </div>
                 <PaqueteAcciones paqueteId={p.id} paqueteNombre={p.nombre} />
+                </div>
               </Card>
             ))}
           </div>
@@ -144,33 +158,48 @@ export default async function HomePage() {
       {/* Ofertas */}
       {ofertas.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
-          <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900 mb-8">
-            Ofertas activas
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            {ofertas.map((o) => (
-              <Card
-                key={o.id}
-                className="p-6 flex flex-col gap-4 bg-gradient-to-br from-clay-50 to-sun-50"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="size-11 rounded-full bg-clay-500 text-white flex items-center justify-center shrink-0">
-                    <Percent className="size-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-semibold text-ink-900">{o.titulo}</h3>
-                    {o.descripcion && <p className="text-sm text-ink-600">{o.descripcion}</p>}
-                    <p className="text-xs text-clay-600 font-medium mt-1">
-                      {Number(o.descuento)}% de descuento
-                    </p>
-                  </div>
-                </div>
-                {o.paquete && (
-                  <PaqueteAcciones paqueteId={o.paquete.id} paqueteNombre={o.paquete.nombre} />
-                )}
-              </Card>
-            ))}
+          <div className="flex items-end justify-between mb-8">
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
+              Ofertas activas
+            </h2>
+            <Link href="/ofertas" className="text-sm font-medium text-clay-600 hover:underline">
+              Ver todas
+            </Link>
           </div>
+          <Carrusel>
+            {ofertas.map((o) => (
+              <CarruselItem key={o.id}>
+                <Card className="overflow-hidden flex flex-col gap-4 bg-white border-l-4 border-l-clay-400 h-full p-0">
+                  {(o.imagenPrincipal || (o.imagenes && o.imagenes.length > 0)) && (
+                    <GaleriaLightbox imagenes={o.imagenes} imagenPrincipal={o.imagenPrincipal} nombre={o.titulo}>
+                      <div className="relative h-36 bg-sun-100">
+                        {o.imagenPrincipal && (
+                          <Image src={o.imagenPrincipal} alt={o.titulo} fill className="object-cover" />
+                        )}
+                      </div>
+                    </GaleriaLightbox>
+                  )}
+                  <div className="p-6 pt-4 flex flex-col gap-4 flex-1">
+                    <div className="flex items-center gap-4">
+                      <div className="size-11 rounded-full bg-clay-500 text-white flex items-center justify-center shrink-0">
+                        <Percent className="size-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-lg font-semibold text-ink-900">{o.titulo}</h3>
+                        {o.descripcion && <p className="text-sm text-ink-600">{o.descripcion}</p>}
+                        <p className="text-xs text-clay-600 font-medium mt-1">
+                          {Number(o.descuento)}% de descuento
+                        </p>
+                      </div>
+                    </div>
+                    {o.paquete && (
+                      <PaqueteAcciones paqueteId={o.paquete.id} paqueteNombre={o.paquete.nombre} />
+                    )}
+                  </div>
+                </Card>
+              </CarruselItem>
+            ))}
+          </Carrusel>
         </section>
       )}
 

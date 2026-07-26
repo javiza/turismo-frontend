@@ -256,6 +256,7 @@ export default function AdminOfertasPage() {
                 <GaleriaImagenesLocal
                   imagenes={imagenesNuevaOferta}
                   onChange={setImagenesNuevaOferta}
+                  carpeta="ofertas"
                 />
               )}
             </div>

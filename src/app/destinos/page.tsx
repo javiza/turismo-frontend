@@ -3,12 +3,13 @@ import { MapPin } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Card } from "@/components/ui/card";
 import { DestinoAcciones } from "@/components/destinos/destino-acciones";
+import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
 import type { Destino } from "@/types";
 
 export const metadata = { title: "Destinos" };
 
 export default async function DestinosPage() {
-  const res = await callBackend<Destino[]>("/destinos");
+  const res = await callBackend<Destino[]>("/destinos", { revalidate: 60 });
   const destinos = res.ok ? res.data : [];
 
   return (
@@ -21,11 +22,13 @@ export default async function DestinosPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {destinos.map((d) => (
             <Card key={d.id} className="overflow-hidden">
-              <div className="relative h-44 bg-sun-100">
-                {d.imagenPrincipal && (
-                  <Image src={d.imagenPrincipal} alt={d.nombre} fill className="object-cover" />
-                )}
-              </div>
+              <GaleriaLightbox imagenes={d.imagenes} imagenPrincipal={d.imagenPrincipal} nombre={d.nombre}>
+                <div className="relative h-44 bg-sun-100">
+                  {d.imagenPrincipal && (
+                    <Image src={d.imagenPrincipal} alt={d.nombre} fill className="object-cover" />
+                  )}
+                </div>
+              </GaleriaLightbox>
               <div className="p-5">
                 <div className="flex items-center gap-1.5 text-xs text-clay-600 font-medium mb-1.5">
                   <MapPin className="size-3.5" />

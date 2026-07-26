@@ -1,14 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Star, Trash2, Plus, ImagePlus } from "lucide-react";
-import { apiFetch, ApiError } from "@/lib/api-client";
+import { Star, Trash2, Plus, ImagePlus, UploadCloud, Loader2 } from "lucide-react";
+import { apiFetch, ApiError, subirImagen } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import type { ImagenGaleria } from "@/types";
+
+type Carpeta = "destinos" | "paquetes" | "ofertas" | "contenido";
+
+/**
+ * Botón + input[type=file] oculto para subir una imagen desde el
+ * computador. Valida tipo/tamaño en el cliente (espejo de las reglas del
+ * backend) antes de mandar el archivo, y delega la subida real al
+ * callback `onSubido(url)` para que cada modo (local/remota) decida qué
+ * hacer con la URL resultante.
+ */
+function BotonSubirArchivo({
+  carpeta,
+  onSubido,
+  disabled,
+}: {
+  carpeta: Carpeta;
+  onSubido: (url: string) => void;
+  disabled?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [subiendo, setSubiendo] = useState(false);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    const tiposPermitidos = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+    if (!tiposPermitidos.includes(file.type)) {
+      toast.error("Usa una imagen JPG, PNG, WEBP o AVIF");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen supera el máximo de 5 MB");
+      return;
+    }
+
+    setSubiendo(true);
+    try {
+      const { url } = await subirImagen(file, carpeta);
+      onSubido(url);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo subir la imagen");
+    } finally {
+      setSubiendo(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/avif"
+        className="hidden"
+        onChange={(e) => handleFile(e.target.files?.[0])}
+      />
+      <Button
+        type="button"
+        variant="primary"
+        size="md"
+        disabled={disabled || subiendo}
+        onClick={() => inputRef.current?.click()}
+      >
+        {subiendo ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
+        {subiendo ? "Subiendo..." : "Subir desde el computador"}
+      </Button>
+    </>
+  );
+}
 
 /**
  * Galería de imágenes reusable para destinos, paquetes y ofertas: agregar
@@ -30,20 +98,27 @@ interface ImagenLocal {
 export function GaleriaImagenesLocal({
   imagenes,
   onChange,
+  carpeta = "destinos",
 }: {
   imagenes: ImagenLocal[];
   onChange: (imagenes: ImagenLocal[]) => void;
+  /** Carpeta de Cloudinary donde se guardan las subidas ("destinos" | "paquetes" | "ofertas" | "contenido"). */
+  carpeta?: Carpeta;
 }) {
   const [nuevaUrl, setNuevaUrl] = useState("");
 
-  const agregar = () => {
-    const url = nuevaUrl.trim();
+  const agregarUrl = (url: string) => {
     if (!url) return;
     if (imagenes.some((i) => i.url === url)) {
       toast.error("Esa imagen ya está en la galería");
       return;
     }
     onChange([...imagenes, { url, esPrincipal: imagenes.length === 0 }]);
+  };
+
+  const agregar = () => {
+    const url = nuevaUrl.trim();
+    agregarUrl(url);
     setNuevaUrl("");
   };
 
@@ -62,26 +137,33 @@ export function GaleriaImagenesLocal({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex gap-2 items-end">
-        <div className="flex-1">
-          <Input
-            label="Agregar imagen (URL)"
-            placeholder="https://..."
-            value={nuevaUrl}
-            onChange={(e) => setNuevaUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                agregar();
-              }
-            }}
-          />
+      <div className="flex flex-wrap gap-2 items-end">
+        <BotonSubirArchivo carpeta={carpeta} onSubido={agregarUrl} />
+        <div className="flex-1 min-w-[220px] flex gap-2 items-end">
+          <div className="flex-1">
+            <Input
+              label="O pega una URL de imagen"
+              placeholder="https://..."
+              value={nuevaUrl}
+              onChange={(e) => setNuevaUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  agregar();
+                }
+              }}
+            />
+          </div>
+          <Button type="button" variant="secondary" size="md" onClick={agregar}>
+            <Plus className="size-4" />
+            Agregar
+          </Button>
         </div>
-        <Button type="button" variant="secondary" size="md" onClick={agregar}>
-          <Plus className="size-4" />
-          Agregar
-        </Button>
       </div>
+      <p className="text-xs text-ink-400">
+        Puedes agregar tantas fotos como necesites; marca con la estrella la que quieres usar
+        como imagen de presentación (portada).
+      </p>
 
       <GaleriaGrid
         items={imagenes.map((i) => ({ id: i.url, url: i.url, esPrincipal: i.esPrincipal }))}
@@ -147,32 +229,43 @@ export function GaleriaImagenesRemota({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex gap-2 items-end">
-        <div className="flex-1">
-          <Input
-            label="Agregar imagen (URL)"
-            placeholder="https://..."
-            value={nuevaUrl}
-            onChange={(e) => setNuevaUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (nuevaUrl.trim()) agregar.mutate(nuevaUrl.trim());
-              }
-            }}
-          />
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          size="md"
+      <div className="flex flex-wrap gap-2 items-end">
+        <BotonSubirArchivo
+          carpeta={entidad}
           disabled={agregar.isPending}
-          onClick={() => nuevaUrl.trim() && agregar.mutate(nuevaUrl.trim())}
-        >
-          <Plus className="size-4" />
-          Agregar
-        </Button>
+          onSubido={(url) => agregar.mutate(url)}
+        />
+        <div className="flex-1 min-w-[220px] flex gap-2 items-end">
+          <div className="flex-1">
+            <Input
+              label="O pega una URL de imagen"
+              placeholder="https://..."
+              value={nuevaUrl}
+              onChange={(e) => setNuevaUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (nuevaUrl.trim()) agregar.mutate(nuevaUrl.trim());
+                }
+              }}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            disabled={agregar.isPending}
+            onClick={() => nuevaUrl.trim() && agregar.mutate(nuevaUrl.trim())}
+          >
+            <Plus className="size-4" />
+            Agregar
+          </Button>
+        </div>
       </div>
+      <p className="text-xs text-ink-400">
+        Puedes agregar tantas fotos como necesites; marca con la estrella la que quieres usar
+        como imagen de presentación (portada).
+      </p>
 
       <GaleriaGrid
         items={imagenes.map((i) => ({ id: i.id, url: i.url, esPrincipal: i.esPrincipal }))}

@@ -1,10 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
-import { CalendarDays, MessageSquareText, User, Wallet, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SkyBackground } from "@/components/shared/sky-background";
+import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
+import { CalendarDays, MessageSquareText, User, Wallet, MapPin, XCircle } from "lucide-react";
 import type { Cliente, Reserva, Cotizacion } from "@/types";
 
 const estadoStyles: Record<string, string> = {
@@ -26,6 +30,8 @@ function formatoCLP(valor: number): string {
 }
 
 export default function DashboardClientePage() {
+  const queryClient = useQueryClient();
+
   const { data: perfil } = useQuery({
     queryKey: ["cliente-perfil"],
     queryFn: () => apiFetch<Cliente>("/clientes-auth/perfil"),
@@ -41,8 +47,27 @@ export default function DashboardClientePage() {
     queryFn: () => apiFetch<Cotizacion[]>("/clientes-auth/mis-cotizaciones"),
   });
 
+  const cancelarReserva = useMutation({
+    mutationFn: (id: number) =>
+      apiFetch(`/clientes-auth/mis-reservas/${id}/cancelar`, { method: "PATCH" }),
+    onSuccess: () => {
+      toast.success("Reserva cancelada.");
+      queryClient.invalidateQueries({ queryKey: ["mis-reservas"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo cancelar la reserva");
+    },
+  });
+
+  function confirmarCancelacion(id: number, nombrePaquete: string) {
+    if (window.confirm(`¿Seguro que quieres cancelar la reserva de "${nombrePaquete}"?`)) {
+      cancelarReserva.mutate(id);
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-12">
+    <div className="relative mx-auto max-w-5xl px-4 sm:px-6 py-12">
+      <SkyBackground className="fixed inset-0 -z-10 opacity-90" />
       <div className="flex items-center gap-3 mb-8">
         <div className="size-12 rounded-full bg-clay-500 text-white flex items-center justify-center">
           <User className="size-6" />
@@ -70,15 +95,22 @@ export default function DashboardClientePage() {
             {reservas.map((r) => (
               <Card key={r.id} className="p-5 flex gap-4">
                 {r.paquete?.imagenPrincipal && (
-                  <div className="relative size-16 rounded-xl overflow-hidden shrink-0 bg-sun-100">
-                    <Image
-                      src={r.paquete.imagenPrincipal}
-                      alt={r.paquete.nombre}
-                      fill
-                      sizes="64px"
-                      className="object-cover"
-                    />
-                  </div>
+                  <GaleriaLightbox
+                    imagenes={r.paquete.imagenes}
+                    imagenPrincipal={r.paquete.imagenPrincipal}
+                    nombre={r.paquete.nombre}
+                    className="size-16 shrink-0"
+                  >
+                    <div className="relative size-16 rounded-xl overflow-hidden shrink-0 bg-sun-100">
+                      <Image
+                        src={r.paquete.imagenPrincipal}
+                        alt={r.paquete.nombre}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    </div>
+                  </GaleriaLightbox>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-3">
@@ -111,6 +143,22 @@ export default function DashboardClientePage() {
                         </span>
                       )}
                     </p>
+                  )}
+                  {r.estado !== "CANCELADA" && (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      className="mt-3"
+                      disabled={cancelarReserva.isPending && cancelarReserva.variables === r.id}
+                      onClick={() =>
+                        confirmarCancelacion(r.id, r.paquete?.nombre ?? `Paquete #${r.paqueteId}`)
+                      }
+                    >
+                      <XCircle className="size-4" />
+                      {cancelarReserva.isPending && cancelarReserva.variables === r.id
+                        ? "Cancelando..."
+                        : "Cancelar reserva"}
+                    </Button>
                   )}
                 </div>
               </Card>

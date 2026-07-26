@@ -133,6 +133,15 @@ src/
   middleware.ts    → protección de rutas /dashboard/**
 ```
 
+## Documentación técnica
+
+- **[docs/ARQUITECTURA.md](docs/ARQUITECTURA.md)** — diagramas (Mermaid)
+  del patrón BFF, flujo de login y de requests autenticadas, por qué cada
+  pieza está hecha así.
+- **[docs/DESPLIEGUE.md](docs/DESPLIEGUE.md)** — guía paso a paso para
+  desplegar en Vercel: variables de entorno, CORS con el backend, cookies
+  en producción, verificación post-deploy.
+
 ## Pendientes sugeridos
 
 - Formularios de reserva y cotización (`POST /reservas`, `POST /cotizaciones`,

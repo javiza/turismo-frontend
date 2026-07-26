@@ -25,7 +25,9 @@ import {
   PlusCircle,
   ShieldAlert,
   Trash2,
-  Scale,
+  Banknote,
+  Percent,
+  Pencil,
 } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
@@ -39,13 +41,16 @@ import type {
   IngresoPorItem,
   MovimientoFinanciero,
   TipoMovimientoFinanciero,
+  CategoriaGasto,
+  GastoPorCategoria,
+  ConfiguracionFinanciera,
 } from "@/types";
 
 const CHART_COLORS = {
-  confirmados: "#2f9e6a", // success
-  pendientes: "#f2b84b", // sun-400
-  cancelados: "#e5484d", // danger
-  primary: "#e07444", // clay-500
+  confirmados: "#4d9c5c", // success
+  pendientes: "#ffb92e", // sun-400
+  cancelados: "#d9432f", // danger
+  primary: "#e8621a", // clay-500
 };
 
 const TIPOS_MOVIMIENTO: { value: TipoMovimientoFinanciero; label: string }[] = [
@@ -69,26 +74,104 @@ const ETIQUETA_TIPO: Record<TipoMovimientoFinanciero, string> = {
 const ES_PERDIDA = (tipo: TipoMovimientoFinanciero) =>
   tipo === "ROBO" || tipo === "ESTAFA" || tipo === "PERDIDA";
 
+const CATEGORIAS_GASTO: { value: CategoriaGasto; label: string }[] = [
+  { value: "OPERACIONAL", label: "Operacional" },
+  { value: "SUELDOS", label: "Sueldos" },
+  { value: "MARKETING", label: "Marketing" },
+  { value: "PROVEEDORES", label: "Proveedores" },
+  { value: "MANTENIMIENTO", label: "Mantenimiento" },
+  { value: "IMPUESTOS", label: "Impuestos" },
+  { value: "OTRO", label: "Otro" },
+];
+
+const ETIQUETA_CATEGORIA: Record<CategoriaGasto | "SIN_CATEGORIA", string> = {
+  OPERACIONAL: "Operacional",
+  SUELDOS: "Sueldos",
+  MARKETING: "Marketing",
+  PROVEEDORES: "Proveedores",
+  MANTENIMIENTO: "Mantenimiento",
+  IMPUESTOS: "Impuestos",
+  OTRO: "Otro",
+  SIN_CATEGORIA: "Sin categoría",
+};
+
 function formatoCLP(valor: number): string {
   return `$${Math.round(valor).toLocaleString("es-CL")}`;
 }
 
-const schemaMovimiento = z.object({
-  tipo: z.enum(["INGRESO_MANUAL", "EGRESO_MANUAL", "ROBO", "ESTAFA", "PERDIDA", "AJUSTE"]),
-  monto: z.coerce.number().positive("Debe ser mayor a 0"),
-  descripcion: z.string().min(1, "Describe brevemente el movimiento").max(500),
-});
+const schemaMovimiento = z
+  .object({
+    tipo: z.enum(["INGRESO_MANUAL", "EGRESO_MANUAL", "ROBO", "ESTAFA", "PERDIDA", "AJUSTE"]),
+    monto: z.coerce.number().positive("Debe ser mayor a 0"),
+    descripcion: z.string().min(1, "Describe brevemente el movimiento").max(500),
+    categoria: z
+      .enum([
+        "OPERACIONAL",
+        "SUELDOS",
+        "MARKETING",
+        "PROVEEDORES",
+        "MANTENIMIENTO",
+        "IMPUESTOS",
+        "OTRO",
+      ])
+      .optional(),
+  })
+  .refine((v) => v.tipo !== "EGRESO_MANUAL" || !!v.categoria, {
+    message: "Selecciona la categoría del gasto",
+    path: ["categoria"],
+  });
 
 type MovimientoFormValues = z.infer<typeof schemaMovimiento>;
 
 export default function AdminFinanzasPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [filtroHistorial, setFiltroHistorial] = useState<"TODOS" | "GASTOS">("TODOS");
+  const [editandoImpuesto, setEditandoImpuesto] = useState(false);
+  const [porcentajeInput, setPorcentajeInput] = useState("");
 
   const { data: resumen, isLoading: cargandoResumen } = useQuery({
     queryKey: ["finanzas-resumen"],
     queryFn: () => apiFetch<ResumenFinanciero>("/finanzas/resumen"),
   });
+
+  const { data: configuracion } = useQuery({
+    queryKey: ["finanzas-configuracion"],
+    queryFn: () => apiFetch<ConfiguracionFinanciera>("/finanzas/configuracion"),
+  });
+
+  const actualizarImpuesto = useMutation({
+    mutationFn: (porcentajeImpuesto: number) =>
+      apiFetch<ConfiguracionFinanciera>("/finanzas/configuracion", {
+        method: "PATCH",
+        body: JSON.stringify({ porcentajeImpuesto }),
+      }),
+    onSuccess: () => {
+      toast.success("Porcentaje de impuesto actualizado");
+      setEditandoImpuesto(false);
+      queryClient.invalidateQueries({ queryKey: ["finanzas-configuracion"] });
+      queryClient.invalidateQueries({ queryKey: ["finanzas-resumen"] });
+    },
+    onError: (err) => {
+      toast.error(
+        err instanceof ApiError ? err.message : "No se pudo actualizar el porcentaje",
+      );
+    },
+  });
+
+  const abrirEdicionImpuesto = () => {
+    setPorcentajeInput(String(configuracion?.porcentajeImpuesto ?? resumen?.porcentajeImpuesto ?? ""));
+    setEditandoImpuesto(true);
+  };
+
+  const guardarImpuesto = () => {
+    const valor = Number(porcentajeInput);
+    if (Number.isNaN(valor) || valor < 0 || valor > 100) {
+      toast.error("Ingresa un porcentaje válido entre 0 y 100");
+      return;
+    }
+    actualizarImpuesto.mutate(valor);
+  };
 
   const { data: mensuales, isLoading: cargandoMensuales } = useQuery({
     queryKey: ["finanzas-mensuales"],
@@ -110,15 +193,29 @@ export default function AdminFinanzasPage() {
     queryFn: () => apiFetch<MovimientoFinanciero[]>("/finanzas/movimientos"),
   });
 
+  const { data: gastosPorCategoria } = useQuery({
+    queryKey: ["finanzas-gastos-categoria"],
+    queryFn: () => apiFetch<GastoPorCategoria[]>("/finanzas/gastos-por-categoria"),
+  });
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<MovimientoFormValues>({
     resolver: zodResolver(schemaMovimiento),
     defaultValues: { tipo: "INGRESO_MANUAL" },
   });
+
+  const tipoSeleccionado = watch("tipo");
+
+  const abrirFormularioGasto = () => {
+    setValue("tipo", "EGRESO_MANUAL");
+    setShowForm(true);
+  };
 
   const registrar = useMutation({
     mutationFn: (values: MovimientoFormValues) =>
@@ -128,10 +225,16 @@ export default function AdminFinanzasPage() {
       }),
     onSuccess: () => {
       toast.success("Movimiento registrado");
-      reset({ tipo: "INGRESO_MANUAL", monto: undefined, descripcion: "" } as unknown as MovimientoFormValues);
+      reset({
+        tipo: "INGRESO_MANUAL",
+        monto: undefined,
+        descripcion: "",
+        categoria: undefined,
+      } as unknown as MovimientoFormValues);
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ["finanzas-movimientos"] });
       queryClient.invalidateQueries({ queryKey: ["finanzas-resumen"] });
+      queryClient.invalidateQueries({ queryKey: ["finanzas-gastos-categoria"] });
     },
     onError: (err) => {
       toast.error(err instanceof ApiError ? err.message : "No se pudo registrar el movimiento");
@@ -145,6 +248,7 @@ export default function AdminFinanzasPage() {
       toast.success("Movimiento eliminado");
       queryClient.invalidateQueries({ queryKey: ["finanzas-movimientos"] });
       queryClient.invalidateQueries({ queryKey: ["finanzas-resumen"] });
+      queryClient.invalidateQueries({ queryKey: ["finanzas-gastos-categoria"] });
     },
     onError: (err) => {
       toast.error(
@@ -162,13 +266,20 @@ export default function AdminFinanzasPage() {
           <h1 className="font-display text-2xl font-semibold text-ink-900">Finanzas</h1>
           <p className="text-sm text-ink-600">
             Ingresos reales (reservas confirmadas), ingreso potencial (pendientes), ingreso
-            perdido (canceladas) y movimientos manuales registrados a mano.
+            perdido (canceladas), movimientos manuales y resumen fiscal (ganancias, gastos e
+            impuestos).
           </p>
         </div>
-        <Button size="sm" onClick={() => setShowForm((v) => !v)}>
-          <PlusCircle className="size-4" />
-          {showForm ? "Cancelar" : "Registrar movimiento manual"}
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="secondary" onClick={abrirFormularioGasto}>
+            <Banknote className="size-4" />
+            Registrar gasto
+          </Button>
+          <Button size="sm" onClick={() => setShowForm((v) => !v)}>
+            <PlusCircle className="size-4" />
+            {showForm ? "Cancelar" : "Registrar movimiento manual"}
+          </Button>
+        </div>
       </div>
 
       {showForm && (
@@ -199,6 +310,20 @@ export default function AdminFinanzasPage() {
               error={errors.monto?.message}
               {...register("monto")}
             />
+            {tipoSeleccionado === "EGRESO_MANUAL" && (
+              <Select
+                label="Categoría del gasto"
+                error={errors.categoria?.message}
+                {...register("categoria")}
+              >
+                <option value="">Selecciona una categoría</option>
+                {CATEGORIAS_GASTO.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
+            )}
             <div className="sm:col-span-2">
               <Textarea
                 label="Descripción"
@@ -248,7 +373,7 @@ export default function AdminFinanzasPage() {
       </div>
 
       {/* Movimientos manuales */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           icon={<PlusCircle className="size-5" />}
           label="Ingresos manuales"
@@ -268,13 +393,74 @@ export default function AdminFinanzasPage() {
           loading={cargandoResumen}
           tone="danger"
         />
-        <StatCard
-          icon={<Scale className="size-5" />}
-          label="Balance total"
-          value={resumen ? formatoCLP(resumen.balanceTotal) : undefined}
-          loading={cargandoResumen}
-        />
       </div>
+
+      {/* Resumen fiscal: ganancias, gastos, impuestos (% editable) y ganancia neta */}
+      <Card className="p-6">
+        <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
+          <div>
+            <h3 className="font-medium text-ink-900">Resumen fiscal</h3>
+            <p className="text-xs text-ink-400 mt-1">
+              Ganancias y gastos totales del período, e impuesto calculado sobre la ganancia
+              según el porcentaje vigente.
+            </p>
+          </div>
+          {!editandoImpuesto ? (
+            <Button size="sm" variant="secondary" onClick={abrirEdicionImpuesto}>
+              <Pencil className="size-4" />
+              Editar % impuesto
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="w-28">
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  max={100}
+                  value={porcentajeInput}
+                  onChange={(e) => setPorcentajeInput(e.target.value)}
+                  aria-label="Porcentaje de impuesto"
+                />
+              </div>
+              <Button size="sm" onClick={guardarImpuesto} disabled={actualizarImpuesto.isPending}>
+                {actualizarImpuesto.isPending ? "Guardando..." : "Guardar"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditandoImpuesto(false)}>
+                Cancelar
+              </Button>
+            </div>
+          )}
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            icon={<Wallet className="size-5" />}
+            label="Ganancias totales"
+            value={resumen ? formatoCLP(resumen.gananciasTotales) : undefined}
+            loading={cargandoResumen}
+            tone="success"
+          />
+          <StatCard
+            icon={<TrendingDown className="size-5" />}
+            label="Gastos totales"
+            value={resumen ? formatoCLP(resumen.gastosTotales) : undefined}
+            loading={cargandoResumen}
+            tone="danger"
+          />
+          <StatCard
+            icon={<Percent className="size-5" />}
+            label={`Impuestos (${(configuracion?.porcentajeImpuesto ?? resumen?.porcentajeImpuesto ?? 0).toLocaleString("es-CL")}%)`}
+            value={resumen ? formatoCLP(resumen.impuestos) : undefined}
+            loading={cargandoResumen}
+          />
+          <StatCard
+            label="Ganancia neta (post-impuesto)"
+            value={resumen ? formatoCLP(resumen.gananciaNeta) : undefined}
+            loading={cargandoResumen}
+            tone="success"
+          />
+        </div>
+      </Card>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -360,9 +546,68 @@ export default function AdminFinanzasPage() {
         </Card>
       </div>
 
+      {/* Gastos por categoría */}
+      {gastosPorCategoria && gastosPorCategoria.length > 0 && (
+        <Card className="p-6">
+          <h3 className="font-medium text-ink-900 mb-1">Gastos por categoría</h3>
+          <p className="text-xs text-ink-400 mb-4">
+            Desglose de los egresos manuales (gastos operativos) registrados, por rubro.
+          </p>
+          <ul className="flex flex-col gap-3">
+            {(() => {
+              const max = Math.max(...gastosPorCategoria.map((g) => g.total), 1);
+              return gastosPorCategoria.map((g) => (
+                <li key={g.categoria} className="flex items-center gap-3">
+                  <span className="text-sm text-ink-800 w-32 shrink-0 truncate">
+                    {ETIQUETA_CATEGORIA[g.categoria]}
+                  </span>
+                  <div className="flex-1">
+                    <div className="h-2.5 rounded-full bg-sun-100 overflow-hidden">
+                      <div
+                        className="h-full bg-info rounded-full"
+                        style={{ width: `${(g.total / max) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-ink-900 shrink-0 w-28 text-right">
+                    {formatoCLP(g.total)}
+                  </span>
+                </li>
+              ));
+            })()}
+          </ul>
+        </Card>
+      )}
+
       {/* Historial de movimientos manuales */}
       <Card className="p-6">
-        <h3 className="font-medium text-ink-900 mb-1">Movimientos manuales</h3>
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-1">
+          <h3 className="font-medium text-ink-900">Movimientos manuales</h3>
+          <div className="flex gap-1 bg-sun-50 rounded-lg p-1">
+            <button
+              type="button"
+              onClick={() => setFiltroHistorial("TODOS")}
+              className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+                filtroHistorial === "TODOS"
+                  ? "bg-white shadow-sm text-ink-900"
+                  : "text-ink-600 hover:text-ink-900"
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltroHistorial("GASTOS")}
+              className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+                filtroHistorial === "GASTOS"
+                  ? "bg-white shadow-sm text-ink-900"
+                  : "text-ink-600 hover:text-ink-900"
+              }`}
+            >
+              Solo gastos
+            </button>
+          </div>
+        </div>
         <p className="text-xs text-ink-400 mb-4">
           Historial de dinero cargado a mano. Solo un super administrador puede eliminar un
           registro de esta lista, para que un robo o estafa no pueda borrarse por error o a
@@ -374,51 +619,67 @@ export default function AdminFinanzasPage() {
               <div key={i} className="h-12 rounded-card bg-sun-100/60 animate-pulse" />
             ))}
           </div>
-        ) : !movimientos || movimientos.length === 0 ? (
-          <p className="text-sm text-ink-400 text-center py-8">
-            Todavía no hay movimientos manuales registrados.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {movimientos.map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center gap-3 rounded-xl border border-sun-100 p-3"
-              >
-                <span
-                  className={`text-xs font-medium px-2 py-1 rounded-full shrink-0 ${
-                    ES_PERDIDA(m.tipo)
-                      ? "bg-danger/15 text-danger"
-                      : m.tipo === "INGRESO_MANUAL"
-                        ? "bg-success/15 text-success"
-                        : "bg-ink-100 text-ink-600"
-                  }`}
-                >
-                  {ETIQUETA_TIPO[m.tipo]}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-ink-800 truncate">{m.descripcion}</p>
-                  <p className="text-xs text-ink-400">
-                    {new Date(m.createdAt).toLocaleString("es-CL")}
-                    {m.usuario?.nombre && <> · {m.usuario.nombre}</>}
-                  </p>
-                </div>
-                <span className="text-sm font-semibold text-ink-900 shrink-0">
-                  {formatoCLP(m.monto)}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={eliminar.isPending}
-                  onClick={() => eliminar.mutate(m.id)}
-                  aria-label="Eliminar movimiento"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+        ) : (() => {
+            const listaFiltrada =
+              filtroHistorial === "GASTOS"
+                ? movimientos?.filter((m) => m.tipo === "EGRESO_MANUAL")
+                : movimientos;
+            if (!listaFiltrada || listaFiltrada.length === 0) {
+              return (
+                <p className="text-sm text-ink-400 text-center py-8">
+                  {filtroHistorial === "GASTOS"
+                    ? "Todavía no hay gastos registrados."
+                    : "Todavía no hay movimientos manuales registrados."}
+                </p>
+              );
+            }
+            return (
+              <div className="flex flex-col gap-2">
+                {listaFiltrada.map((m) => (
+                  <div
+                    key={m.id}
+                    className="flex items-center gap-3 rounded-xl border border-sun-100 p-3"
+                  >
+                    <span
+                      className={`text-xs font-medium px-2 py-1 rounded-full shrink-0 ${
+                        ES_PERDIDA(m.tipo)
+                          ? "bg-danger/15 text-danger"
+                          : m.tipo === "INGRESO_MANUAL"
+                            ? "bg-success/15 text-success"
+                            : "bg-ink-100 text-ink-600"
+                      }`}
+                    >
+                      {ETIQUETA_TIPO[m.tipo]}
+                    </span>
+                    {m.categoria && (
+                      <span className="text-xs font-medium px-2 py-1 rounded-full shrink-0 bg-info/15 text-info">
+                        {ETIQUETA_CATEGORIA[m.categoria]}
+                      </span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-ink-800 truncate">{m.descripcion}</p>
+                      <p className="text-xs text-ink-400">
+                        {new Date(m.createdAt).toLocaleString("es-CL")}
+                        {m.usuario?.nombre && <> · {m.usuario.nombre}</>}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-ink-900 shrink-0">
+                      {formatoCLP(m.monto)}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={eliminar.isPending}
+                      onClick={() => eliminar.mutate(m.id)}
+                      aria-label="Eliminar movimiento"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            );
+          })()}
       </Card>
     </div>
   );
