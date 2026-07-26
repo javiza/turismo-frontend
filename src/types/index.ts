@@ -113,6 +113,10 @@ export interface ContenidoHome {
   telefono: string | null;
   correo: string | null;
   direccion: string | null;
+  heroImagenUrl: string | null;
+  heroImagenPosX: number;
+  heroImagenPosY: number;
+  heroImagenZoom: number;
   updatedAt: string;
 }
 

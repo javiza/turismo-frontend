@@ -35,15 +35,22 @@ export default async function HomePage() {
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden bg-ink-900">
-        {/* Foto de fondo (playa) con overlay oscuro para que el texto blanco
-            se lea bien encima, al estilo de un hero de agencia de turismo. */}
+        {/* Foto de fondo con overlay oscuro para que el texto blanco se lea
+            bien encima. Imagen, encuadre (object-position) y zoom son
+            editables desde el panel admin (Contenido > Portada); si el
+            admin no ha cargado nada, se usa la imagen por defecto del
+            proyecto centrada y sin zoom. */}
         <Image
-          src="/images/hero-playa.webp"
+          src={contenido?.heroImagenUrl || "/images/hero-playa.webp"}
           alt=""
           fill
           priority
           aria-hidden="true"
           className="object-cover"
+          style={{
+            objectPosition: `${contenido?.heroImagenPosX ?? 50}% ${contenido?.heroImagenPosY ?? 50}%`,
+            transform: `scale(${(contenido?.heroImagenZoom ?? 100) / 100})`,
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink-900/90 via-ink-900/55 to-ink-900/25" />
         <div className="absolute inset-0 bg-gradient-to-r from-ink-900/70 via-ink-900/10 to-transparent" />

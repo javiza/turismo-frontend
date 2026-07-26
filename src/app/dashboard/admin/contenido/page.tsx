@@ -81,6 +81,10 @@ const schemaPortada = z.object({
   sloganFontUrl: z.string().max(1000),
   titulo: z.string().max(300),
   subtitulo: z.string().max(500),
+  heroImagenUrl: z.string().max(1000),
+  heroImagenPosX: z.coerce.number().min(0).max(100),
+  heroImagenPosY: z.coerce.number().min(0).max(100),
+  heroImagenZoom: z.coerce.number().min(100).max(300),
 });
 
 type FormPortada = z.infer<typeof schemaPortada>;
@@ -107,6 +111,10 @@ function SeccionPortada({ contenido }: { contenido?: ContenidoHome }) {
       sloganFontUrl: "",
       titulo: "",
       subtitulo: "",
+      heroImagenUrl: "",
+      heroImagenPosX: 50,
+      heroImagenPosY: 50,
+      heroImagenZoom: 100,
     },
   });
 
@@ -120,6 +128,10 @@ function SeccionPortada({ contenido }: { contenido?: ContenidoHome }) {
         sloganFontUrl: contenido.sloganFontUrl ?? "",
         titulo: contenido.titulo,
         subtitulo: contenido.subtitulo,
+        heroImagenUrl: contenido.heroImagenUrl ?? "",
+        heroImagenPosX: contenido.heroImagenPosX ?? 50,
+        heroImagenPosY: contenido.heroImagenPosY ?? 50,
+        heroImagenZoom: contenido.heroImagenZoom ?? 100,
       });
     }
   }, [contenido, reset]);
@@ -142,6 +154,10 @@ function SeccionPortada({ contenido }: { contenido?: ContenidoHome }) {
         sloganFontUrl: data.sloganFontUrl ?? "",
         titulo: data.titulo,
         subtitulo: data.subtitulo,
+        heroImagenUrl: data.heroImagenUrl ?? "",
+        heroImagenPosX: data.heroImagenPosX ?? 50,
+        heroImagenPosY: data.heroImagenPosY ?? 50,
+        heroImagenZoom: data.heroImagenZoom ?? 100,
       });
     },
     onError: (err) => {
@@ -378,6 +394,114 @@ function SeccionPortada({ contenido }: { contenido?: ContenidoHome }) {
           error={errors.subtitulo?.message}
           {...register("subtitulo")}
         />
+
+        <div className="flex flex-col gap-3 rounded-card border border-ink-100 p-4">
+          <div>
+            <span className="text-sm font-medium text-ink-800">Imagen de fondo del hero</span>
+            <p className="text-xs text-ink-400 mt-0.5">
+              Se muestra detrás del título/subtítulo en la home y en el banner de la sesión del
+              cliente. Si no cargas ninguna, se usa la imagen por defecto del sitio.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <BotonSubirArchivo
+              carpeta="contenido"
+              onSubido={(url) =>
+                setValue("heroImagenUrl", url, { shouldDirty: true })
+              }
+            />
+            <div className="flex-1 min-w-[220px]">
+              <Input
+                placeholder="O pega la URL de una imagen"
+                error={errors.heroImagenUrl?.message}
+                {...register("heroImagenUrl")}
+              />
+            </div>
+            {watch("heroImagenUrl") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setValue("heroImagenUrl", "", { shouldDirty: true });
+                  setValue("heroImagenPosX", 50, { shouldDirty: true });
+                  setValue("heroImagenPosY", 50, { shouldDirty: true });
+                  setValue("heroImagenZoom", 100, { shouldDirty: true });
+                }}
+              >
+                <X className="size-4" />
+                Quitar imagen
+              </Button>
+            )}
+          </div>
+
+          {/* Vista previa: mismo recorte (object-cover) que se ve en el
+              hero real, para que el admin ajuste posición y zoom viendo
+              el resultado en vivo antes de guardar. */}
+          <div className="relative h-40 sm:h-48 rounded-card overflow-hidden bg-sun-100 border border-sun-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={watch("heroImagenUrl") || "/images/hero-playa.webp"}
+              alt="Vista previa de la imagen de fondo"
+              className="absolute inset-0 h-full w-full object-cover"
+              style={{
+                objectPosition: `${watch("heroImagenPosX")}% ${watch("heroImagenPosY")}%`,
+                transform: `scale(${watch("heroImagenZoom") / 100})`,
+              }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.visibility = "hidden";
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink-900/70 via-ink-900/25 to-transparent pointer-events-none" />
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="heroImagenPosX" className="text-xs font-medium text-ink-600">
+                Encuadre horizontal ({Math.round(watch("heroImagenPosX"))}%)
+              </label>
+              <input
+                id="heroImagenPosX"
+                type="range"
+                min={0}
+                max={100}
+                {...register("heroImagenPosX")}
+                className="accent-clay-500"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="heroImagenPosY" className="text-xs font-medium text-ink-600">
+                Encuadre vertical ({Math.round(watch("heroImagenPosY"))}%)
+              </label>
+              <input
+                id="heroImagenPosY"
+                type="range"
+                min={0}
+                max={100}
+                {...register("heroImagenPosY")}
+                className="accent-clay-500"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="heroImagenZoom" className="text-xs font-medium text-ink-600">
+                Zoom ({Math.round(watch("heroImagenZoom"))}%)
+              </label>
+              <input
+                id="heroImagenZoom"
+                type="range"
+                min={100}
+                max={300}
+                {...register("heroImagenZoom")}
+                className="accent-clay-500"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-ink-400">
+            El encuadre define qué sección de la imagen queda visible; el zoom permite acercarla
+            para mostrar solo una parte. Ambos se ven reflejados en la vista previa de arriba.
+          </p>
+        </div>
 
         <div>
           <Button type="submit" disabled={guardar.isPending || !isDirty}>

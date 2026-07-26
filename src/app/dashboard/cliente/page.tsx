@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { SkyBackground } from "@/components/shared/sky-background";
 import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
 import { CalendarDays, MessageSquareText, User, Wallet, MapPin, XCircle } from "lucide-react";
-import type { Cliente, Reserva, Cotizacion } from "@/types";
+import type { Cliente, Reserva, Cotizacion, ContenidoHome } from "@/types";
 
 const estadoStyles: Record<string, string> = {
   PENDIENTE: "bg-sun-200 text-sun-800",
@@ -36,6 +36,15 @@ export default function DashboardClientePage() {
   const { data: perfil } = useQuery({
     queryKey: ["cliente-perfil"],
     queryFn: () => apiFetch<Cliente>("/clientes-auth/perfil"),
+  });
+
+  // Mismo contenido editable desde el panel admin que usa la home
+  // pública, solo para reutilizar la imagen/encuadre del hero en el
+  // banner de esta página (no requiere login de admin: es el mismo
+  // endpoint público que consume la home).
+  const { data: contenido } = useQuery({
+    queryKey: ["contenido-home"],
+    queryFn: () => apiFetch<ContenidoHome>("/contenido-home"),
   });
 
   const { data: reservas, isLoading: loadingReservas } = useQuery({
@@ -85,11 +94,15 @@ export default function DashboardClientePage() {
           (reservas / cotizaciones) — mismo look del hero del home. */}
       <div className="relative mb-10 h-40 sm:h-52 rounded-card overflow-hidden">
         <Image
-          src="/images/hero-playa.webp"
+          src={contenido?.heroImagenUrl || "/images/hero-playa.webp"}
           alt=""
           fill
           aria-hidden="true"
           className="object-cover"
+          style={{
+            objectPosition: `${contenido?.heroImagenPosX ?? 50}% ${contenido?.heroImagenPosY ?? 50}%`,
+            transform: `scale(${(contenido?.heroImagenZoom ?? 100) / 100})`,
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink-900/70 via-ink-900/20 to-transparent" />
         <div className="relative h-full flex items-end p-5">
