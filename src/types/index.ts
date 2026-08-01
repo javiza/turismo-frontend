@@ -8,6 +8,7 @@ export interface AdminUser {
   email: string;
   nombre: string;
   rol: RolAdmin;
+  rut?: string | null;
   activo: boolean;
 }
 
@@ -16,7 +17,9 @@ export interface Cliente {
   nombre: string;
   email: string;
   telefono?: string;
+  rut?: string | null;
   activo: boolean;
+  createdAt?: string;
 }
 
 export interface AuthTokens {
@@ -269,6 +272,13 @@ export type CategoriaGasto =
   | "IMPUESTOS"
   | "OTRO";
 
+export type MetodoPago =
+  | "EFECTIVO"
+  | "TRANSFERENCIA"
+  | "TARJETA"
+  | "WEBPAY"
+  | "OTRO";
+
 export interface MovimientoFinanciero {
   id: number;
   tipo: TipoMovimientoFinanciero;
@@ -277,6 +287,11 @@ export interface MovimientoFinanciero {
   categoria?: CategoriaGasto | null;
   usuarioId?: number;
   usuario?: { id: number; nombre?: string; email?: string };
+  // "Quién pagó" — solo se completa para tipo INGRESO_MANUAL.
+  clienteId?: number | null;
+  cliente?: { id: number; nombre: string; email: string; rut?: string } | null;
+  pagadorNombre?: string | null;
+  metodoPago?: MetodoPago | null;
   createdAt: string;
 }
 

@@ -42,8 +42,10 @@ import type {
   MovimientoFinanciero,
   TipoMovimientoFinanciero,
   CategoriaGasto,
+  MetodoPago,
   GastoPorCategoria,
   ConfiguracionFinanciera,
+  Cliente,
 } from "@/types";
 
 const CHART_COLORS = {
@@ -95,6 +97,22 @@ const ETIQUETA_CATEGORIA: Record<CategoriaGasto | "SIN_CATEGORIA", string> = {
   SIN_CATEGORIA: "Sin categoría",
 };
 
+const METODOS_PAGO: { value: MetodoPago; label: string }[] = [
+  { value: "EFECTIVO", label: "Efectivo" },
+  { value: "TRANSFERENCIA", label: "Transferencia" },
+  { value: "TARJETA", label: "Tarjeta" },
+  { value: "WEBPAY", label: "Webpay" },
+  { value: "OTRO", label: "Otro" },
+];
+
+const ETIQUETA_METODO_PAGO: Record<MetodoPago, string> = {
+  EFECTIVO: "Efectivo",
+  TRANSFERENCIA: "Transferencia",
+  TARJETA: "Tarjeta",
+  WEBPAY: "Webpay",
+  OTRO: "Otro",
+};
+
 function formatoCLP(valor: number): string {
   return `$${Math.round(valor).toLocaleString("es-CL")}`;
 }
@@ -115,6 +133,18 @@ const schemaMovimiento = z
         "OTRO",
       ])
       .optional(),
+    // "Quién pagó" — solo aplica a INGRESO_MANUAL (ver refine abajo).
+    // preprocess: el <select> manda "" cuando no se elige cliente, y eso
+    // no es un número válido — lo tratamos como "no seleccionado".
+    clienteId: z.preprocess(
+      (v) => (v === "" || v === undefined ? undefined : v),
+      z.coerce.number().int().positive().optional(),
+    ),
+    pagadorNombre: z.string().max(150).optional(),
+    metodoPago: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "WEBPAY", "OTRO"]).optional(),
+    ),
   })
   .refine((v) => v.tipo !== "EGRESO_MANUAL" || !!v.categoria, {
     message: "Selecciona la categoría del gasto",
@@ -198,6 +228,16 @@ export default function AdminFinanzasPage() {
     queryFn: () => apiFetch<GastoPorCategoria[]>("/finanzas/gastos-por-categoria"),
   });
 
+  // Lista de clientes para el selector "¿quién pagó?" del ingreso
+  // manual. Solo se pide cuando el formulario está abierto: no tiene
+  // sentido cargarla en cada visita a Finanzas si el admin no va a
+  // registrar un ingreso.
+  const { data: clientes } = useQuery({
+    queryKey: ["admin-clientes"],
+    queryFn: () => apiFetch<Cliente[]>("/clientes"),
+    enabled: showForm,
+  });
+
   const {
     register,
     handleSubmit,
@@ -230,6 +270,9 @@ export default function AdminFinanzasPage() {
         monto: undefined,
         descripcion: "",
         categoria: undefined,
+        clienteId: undefined,
+        pagadorNombre: "",
+        metodoPago: undefined,
       } as unknown as MovimientoFormValues);
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ["finanzas-movimientos"] });
@@ -323,6 +366,40 @@ export default function AdminFinanzasPage() {
                   </option>
                 ))}
               </Select>
+            )}
+            {tipoSeleccionado === "INGRESO_MANUAL" && (
+              <>
+                <Select
+                  label="Cliente registrado (opcional)"
+                  error={errors.clienteId?.message}
+                  {...register("clienteId")}
+                >
+                  <option value="">Sin vincular a una cuenta</option>
+                  {clientes?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre} {c.rut ? `· ${c.rut}` : ""} ({c.email})
+                    </option>
+                  ))}
+                </Select>
+                <Input
+                  label="O nombre de quien pagó (si no tiene cuenta)"
+                  placeholder="Ej: Juan Pérez (pasajero sin cuenta)"
+                  error={errors.pagadorNombre?.message}
+                  {...register("pagadorNombre")}
+                />
+                <Select
+                  label="Método de pago"
+                  error={errors.metodoPago?.message}
+                  {...register("metodoPago")}
+                >
+                  <option value="">Selecciona un método</option>
+                  {METODOS_PAGO.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </Select>
+              </>
             )}
             <div className="sm:col-span-2">
               <Textarea
@@ -656,11 +733,26 @@ export default function AdminFinanzasPage() {
                         {ETIQUETA_CATEGORIA[m.categoria]}
                       </span>
                     )}
+                    {m.metodoPago && (
+                      <span className="text-xs font-medium px-2 py-1 rounded-full shrink-0 bg-sun-200 text-ink-700">
+                        {ETIQUETA_METODO_PAGO[m.metodoPago]}
+                      </span>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-ink-800 truncate">{m.descripcion}</p>
                       <p className="text-xs text-ink-400">
                         {new Date(m.createdAt).toLocaleString("es-CL")}
-                        {m.usuario?.nombre && <> · {m.usuario.nombre}</>}
+                        {m.usuario?.nombre && <> · registrado por {m.usuario.nombre}</>}
+                        {(m.cliente?.nombre || m.pagadorNombre) && (
+                          <>
+                            {" "}
+                            · pagó{" "}
+                            <span className="font-medium text-ink-600">
+                              {m.cliente?.nombre ?? m.pagadorNombre}
+                              {m.cliente?.rut ? ` (${m.cliente.rut})` : ""}
+                            </span>
+                          </>
+                        )}
                       </p>
                     </div>
                     <span className="text-sm font-semibold text-ink-900 shrink-0">

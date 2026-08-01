@@ -31,18 +31,18 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-40 bg-cream/90 backdrop-blur border-b border-sun-200">
       <div className="h-[3px] bg-gradient-to-r from-clay-500 via-sun-400 to-ocean-500" />
-      <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-20 flex items-center justify-between">
+      <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-24 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           {logoUrl && !logoRoto ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
               alt={nombreAgencia}
-              className="h-12 w-auto max-w-[180px] object-contain"
+              className="h-16 sm:h-[4.5rem] w-auto max-w-[260px] object-contain"
               onError={() => setLogoRoto(true)}
             />
           ) : (
-            <Compass className="size-8 text-clay-600" strokeWidth={1.75} />
+            <Compass className="size-10 text-clay-600" strokeWidth={1.75} />
           )}
           <span
             className="text-2xl sm:text-3xl leading-none"

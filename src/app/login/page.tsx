@@ -81,6 +81,14 @@ export default function LoginClientePage() {
             error={errors.password?.message}
             {...register("password")}
           />
+          <div className="flex justify-end -mt-2">
+            <Link
+              href="/recuperar-password"
+              className="text-xs text-clay-600 hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
           <Button type="submit" disabled={loading} className="mt-2">
             {loading ? "Ingresando..." : "Ingresar"}
           </Button>

@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   MailQuestion,
@@ -13,13 +15,27 @@ import {
   CalendarCheck,
   Wallet,
   Building2,
+  Users,
+  KeyRound,
+  ClipboardList,
+  ChevronDown,
 } from "lucide-react";
 import { useConsultasNoLeidas } from "@/hooks/use-consultas-no-leidas";
 import { useProveedoresNoLeidos } from "@/hooks/use-proveedores-no-leidos";
 
+const SERVICIOS = [
+  { href: "/dashboard/admin/destinos", label: "Destinos", icon: MapPinned },
+  { href: "/dashboard/admin/paquetes", label: "Paquetes", icon: Package },
+  { href: "/dashboard/admin/ofertas", label: "Ofertas", icon: Tag },
+];
+
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const noLeidas = useConsultasNoLeidas();
   const proveedoresNoLeidos = useProveedoresNoLeidos();
+  const pathname = usePathname();
+
+  const servicioActivo = SERVICIOS.some((s) => pathname.startsWith(s.href));
+  const [serviciosAbierto, setServiciosAbierto] = useState(servicioActivo);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 grid lg:grid-cols-[220px_1fr] gap-8">
@@ -37,13 +53,6 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             Big data
           </Link>
           <Link
-            href="/dashboard/admin/destinos"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
-          >
-            <MapPinned className="size-4" />
-            Destinos
-          </Link>
-          <Link
             href="/dashboard/admin/reservas"
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
           >
@@ -57,20 +66,43 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             <Wallet className="size-4" />
             Finanzas
           </Link>
-          <Link
-            href="/dashboard/admin/paquetes"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
+
+          <button
+            type="button"
+            onClick={() => setServiciosAbierto((v) => !v)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium w-full text-left ${
+              servicioActivo ? "text-clay-600" : "text-ink-800 hover:bg-sun-100"
+            }`}
+            aria-expanded={serviciosAbierto}
           >
-            <Package className="size-4" />
-            Paquetes
-          </Link>
-          <Link
-            href="/dashboard/admin/ofertas"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
-          >
-            <Tag className="size-4" />
-            Ofertas
-          </Link>
+            <ClipboardList className="size-4" />
+            Ingresar servicio
+            <ChevronDown
+              className={`size-4 ml-auto transition-transform ${serviciosAbierto ? "rotate-180" : ""}`}
+            />
+          </button>
+          {serviciosAbierto && (
+            <div className="flex flex-col gap-1 pl-4 border-l border-sun-200 ml-4">
+              {SERVICIOS.map(({ href, label, icon: Icon }) => {
+                const activo = pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium ${
+                      activo
+                        ? "bg-clay-500 text-white"
+                        : "text-ink-800 hover:bg-sun-100"
+                    }`}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
           <Link
             href="/dashboard/admin/contenido"
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
@@ -108,6 +140,20 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 {proveedoresNoLeidos > 99 ? "99+" : proveedoresNoLeidos}
               </span>
             )}
+          </Link>
+          <Link
+            href="/dashboard/admin/usuarios"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
+          >
+            <Users className="size-4" />
+            Usuarios
+          </Link>
+          <Link
+            href="/dashboard/admin/cuenta"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium mt-2 border-t border-sun-200 pt-3"
+          >
+            <KeyRound className="size-4" />
+            Mi cuenta
           </Link>
         </nav>
       </aside>

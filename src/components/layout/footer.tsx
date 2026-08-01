@@ -34,11 +34,11 @@ export function Footer({
               <img
                 src={logoUrl}
                 alt={nombreAgencia}
-                className="h-10 w-auto max-w-[150px] object-contain"
+                className="h-14 w-auto max-w-[210px] object-contain"
                 onError={() => setLogoRoto(true)}
               />
             ) : (
-              <Compass className="size-7 text-clay-600" strokeWidth={1.75} />
+              <Compass className="size-9 text-clay-600" strokeWidth={1.75} />
             )}
             <span
               className="text-2xl leading-none"
