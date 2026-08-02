@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { SkyBackground } from "@/components/shared/sky-background";
-import { Compass, Luggage, IdCard, User } from "lucide-react";
+import { Compass, Luggage, IdCard, User, Newspaper, Home } from "lucide-react";
 import type { Cliente, ContenidoHome } from "@/types";
 
 export default function DashboardClienteLayout({ children }: { children: React.ReactNode }) {
@@ -27,7 +27,9 @@ export default function DashboardClienteLayout({ children }: { children: React.R
   });
 
   const links = [
+    { href: "/dashboard/cliente", label: "Inicio", icon: Home },
     { href: "/dashboard/cliente/viajes", label: "Mis viajes", icon: Luggage },
+    { href: "/dashboard/cliente/noticias", label: "Noticias", icon: Newspaper },
     { href: "/dashboard/cliente/cuenta", label: "Mi cuenta", icon: IdCard },
   ];
 
@@ -76,7 +78,8 @@ export default function DashboardClienteLayout({ children }: { children: React.R
           </div>
           <nav className="flex lg:flex-col gap-1 text-sm">
             {links.map(({ href, label, icon: Icon }) => {
-              const activo = pathname.startsWith(href);
+              const activo =
+                href === "/dashboard/cliente" ? pathname === href : pathname.startsWith(href);
               return (
                 <Link
                   key={href}

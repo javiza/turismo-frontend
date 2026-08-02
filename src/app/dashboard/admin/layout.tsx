@@ -19,6 +19,9 @@ import {
   KeyRound,
   ClipboardList,
   ChevronDown,
+  Newspaper,
+  BarChart3,
+  GalleryHorizontal,
 } from "lucide-react";
 import { useConsultasNoLeidas } from "@/hooks/use-consultas-no-leidas";
 import { useProveedoresNoLeidos } from "@/hooks/use-proveedores-no-leidos";
@@ -50,7 +53,21 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
           >
             <LayoutDashboard className="size-4" />
+            Inicio
+          </Link>
+          <Link
+            href="/dashboard/admin/analytics"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
+          >
+            <BarChart3 className="size-4" />
             Big data
+          </Link>
+          <Link
+            href="/dashboard/admin/noticias"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
+          >
+            <Newspaper className="size-4" />
+            Noticias
           </Link>
           <Link
             href="/dashboard/admin/reservas"
@@ -109,6 +126,13 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           >
             <FileText className="size-4" />
             Contenido home
+          </Link>
+          <Link
+            href="/dashboard/admin/slides"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
+          >
+            <GalleryHorizontal className="size-4" />
+            Slide de portada
           </Link>
           <Link
             href="/dashboard/admin/consultas-clientes"

@@ -6,13 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileText, Plus, Trash2, ImageOff, X, UploadCloud, Loader2 } from "lucide-react";
+import { FileText, Plus, Trash2, ImageOff, X, UploadCloud, Loader2, Palette } from "lucide-react";
 import { apiFetch, ApiError, subirFuente } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BotonSubirArchivo } from "@/components/shared/galeria-imagenes";
+import { SelectorColor } from "@/components/admin/selector-color";
 import { FUENTES_SLOGAN, resolverFontFamilySlogan } from "@/lib/slogan-fonts";
 import type { ContenidoHome } from "@/types";
 
@@ -58,6 +59,7 @@ export default function AdminContenidoPage() {
       ) : (
         <div className="flex flex-col gap-6">
           <SeccionPortada contenido={contenido} />
+          <SeccionColores contenido={contenido} />
           <SeccionQuienesSomos contenido={contenido} />
           <SeccionContacto contenido={contenido} />
           <SeccionResenas contenido={contenido} />
@@ -507,6 +509,114 @@ function SeccionPortada({ contenido }: { contenido?: ContenidoHome }) {
           <Button type="submit" disabled={guardar.isPending || !isDirty}>
             <FileText className="size-4" />
             {guardar.isPending ? "Guardando..." : "Guardar portada"}
+          </Button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
+// --- Colores del sitio: fondo general y navbar ---
+
+const schemaColores = z.object({
+  colorFondo: z
+    .string()
+    .regex(/^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$/, "Debe ser un color hexadecimal, ej: #f8fbff"),
+  colorNavbar: z
+    .string()
+    .regex(/^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$/, "Debe ser un color hexadecimal, ej: #f8fbff"),
+  colorFooter: z
+    .string()
+    .regex(/^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$/, "Debe ser un color hexadecimal, ej: #f8fbff"),
+});
+
+type FormColores = z.infer<typeof schemaColores>;
+
+function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
+  const queryClient = useQueryClient();
+
+  const {
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isDirty },
+  } = useForm<FormColores>({
+    resolver: zodResolver(schemaColores),
+    defaultValues: { colorFondo: "", colorNavbar: "", colorFooter: "" },
+  });
+
+  useEffect(() => {
+    if (contenido) {
+      reset({
+        colorFondo: contenido.colorFondo ?? "",
+        colorNavbar: contenido.colorNavbar ?? "",
+        colorFooter: contenido.colorFooter ?? "",
+      });
+    }
+  }, [contenido, reset]);
+
+  const guardar = useMutation({
+    mutationFn: (values: FormColores) =>
+      apiFetch<ContenidoHome>("/contenido-home", {
+        method: "PATCH",
+        body: JSON.stringify(values),
+      }),
+    onSuccess: (data) => {
+      toast.success("Colores actualizados");
+      revalidarContenidoPublico();
+      queryClient.setQueryData(QUERY_KEY, data);
+      reset({
+        colorFondo: data.colorFondo ?? "",
+        colorNavbar: data.colorNavbar ?? "",
+        colorFooter: data.colorFooter ?? "",
+      });
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : "No se pudieron guardar los colores");
+    },
+  });
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-2 mb-1">
+        <Palette className="size-5 text-clay-600" />
+        <h2 className="font-display text-lg font-semibold text-ink-900">Colores del sitio</h2>
+      </div>
+      <p className="text-sm text-ink-600 mb-4">
+        Elige el color de fondo general, el del navbar y el del footer del sitio público. Si no
+        eliges ninguno, se usan los tonos por defecto.
+      </p>
+      <form onSubmit={handleSubmit((v) => guardar.mutate(v))} className="flex flex-col gap-6">
+        <div className="grid sm:grid-cols-3 gap-6">
+          <SelectorColor
+            label="Color de fondo"
+            descripcion="Fondo general de las páginas públicas."
+            value={watch("colorFondo")}
+            onChange={(v) => setValue("colorFondo", v, { shouldDirty: true })}
+          />
+          <SelectorColor
+            label="Color del navbar"
+            descripcion="Fondo de la barra de navegación superior."
+            value={watch("colorNavbar")}
+            onChange={(v) => setValue("colorNavbar", v, { shouldDirty: true })}
+          />
+          <SelectorColor
+            label="Color del footer"
+            descripcion="Fondo del pie de página. Si no eliges uno, usa el mismo color que el navbar."
+            value={watch("colorFooter")}
+            onChange={(v) => setValue("colorFooter", v, { shouldDirty: true })}
+          />
+        </div>
+        {(errors.colorFondo || errors.colorNavbar || errors.colorFooter) && (
+          <p className="text-xs text-danger">
+            {errors.colorFondo?.message || errors.colorNavbar?.message || errors.colorFooter?.message}
+          </p>
+        )}
+        <div>
+          <Button type="submit" disabled={guardar.isPending || !isDirty}>
+            <Palette className="size-4" />
+            {guardar.isPending ? "Guardando..." : "Guardar colores"}
           </Button>
         </div>
       </form>

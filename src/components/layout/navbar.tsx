@@ -29,16 +29,16 @@ export function Navbar({
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-cream/90 backdrop-blur border-b border-sun-200">
+    <header className="sticky top-0 z-40 bg-[var(--color-navbar-app)]/90 backdrop-blur border-b border-sun-200">
       <div className="h-[3px] bg-gradient-to-r from-clay-500 via-sun-400 to-ocean-500" />
-      <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-24 flex items-center justify-between">
+      <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-24 sm:h-36 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           {logoUrl && !logoRoto ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
               alt={nombreAgencia}
-              className="h-16 sm:h-[4.5rem] w-auto max-w-[260px] object-contain"
+              className="h-32 sm:h-[9rem] w-auto max-w-[400px] object-contain"
               onError={() => setLogoRoto(true)}
             />
           ) : (
@@ -110,7 +110,7 @@ export function Navbar({
       </nav>
 
       {open && (
-        <div className="md:hidden border-t border-sun-100 px-4 py-4 flex flex-col gap-3 bg-cream">
+        <div className="md:hidden border-t border-sun-100 px-4 py-4 flex flex-col gap-3 bg-[var(--color-navbar-app)]">
           <Link href="/destinos" onClick={() => setOpen(false)}>
             Destinos
           </Link>

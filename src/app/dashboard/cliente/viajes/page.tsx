@@ -169,10 +169,10 @@ export default function MisViajesPage() {
               <Card key={c.id} className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    {(c.paquete || c.destino) && (
+                    {(c.paquete || c.destino || c.noticia) && (
                       <p className="text-xs font-medium text-clay-600 mb-1 flex items-center gap-1 truncate">
                         <MapPin className="size-3.5 shrink-0" />
-                        {c.paquete?.nombre ?? c.destino?.nombre}
+                        {c.paquete?.nombre ?? c.destino?.nombre ?? c.noticia?.titulo}
                       </p>
                     )}
                     <p className="text-sm text-ink-900 line-clamp-2">{c.mensaje}</p>

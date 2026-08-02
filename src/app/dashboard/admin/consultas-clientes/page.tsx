@@ -125,7 +125,8 @@ export default function AdminConsultasClientesPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {consultasFiltradas.map((c) => {
-            const referencia = c.paquete?.nombre ?? c.destino?.nombre ?? "Consulta general";
+            const referencia =
+              c.paquete?.nombre ?? c.destino?.nombre ?? c.noticia?.titulo ?? "Consulta general";
             const abiertaAqui = abierta === c.id;
 
             return (

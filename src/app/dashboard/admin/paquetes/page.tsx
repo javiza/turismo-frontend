@@ -58,8 +58,14 @@ export default function AdminPaquetesPage() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  const destinoIdSeleccionado = watch("destinoId");
+  const destinoSeleccionado = destinos?.find(
+    (d) => String(d.id) === String(destinoIdSeleccionado),
+  );
 
   const cerrarFormulario = () => {
     setShowForm(false);
@@ -223,6 +229,18 @@ export default function AdminPaquetesPage() {
                 </option>
               ))}
             </Select>
+            {destinoSeleccionado && (
+              <p className="text-xs text-ink-400 sm:col-span-2 -mt-2">
+                Precio referencial del destino:{" "}
+                {destinoSeleccionado.precioDesde != null ? (
+                  <span className="font-medium text-clay-600">
+                    Desde ${Number(destinoSeleccionado.precioDesde).toLocaleString("es-CL")}
+                  </span>
+                ) : (
+                  "no tiene precio cargado"
+                )}
+              </p>
+            )}
             <Input label="Nombre" error={errors.nombre?.message} {...register("nombre")} />
             <div>
               <Input

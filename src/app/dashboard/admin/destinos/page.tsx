@@ -18,12 +18,23 @@ import {
 } from "@/components/shared/galeria-imagenes";
 import type { Destino } from "@/types";
 
-const schema = z.object({
-  nombre: z.string().min(1, "Requerido").max(200),
-  descripcion: z.string().min(1, "Requerido"),
-  pais: z.string().min(1, "Requerido").max(100),
-  ciudad: z.string().min(1, "Requerido").max(100),
-});
+const schema = z
+  .object({
+    nombre: z.string().min(1, "Requerido").max(200),
+    descripcion: z.string().min(1, "Requerido"),
+    pais: z.string().min(1, "Requerido").max(100),
+    ciudad: z.string().min(1, "Requerido").max(100),
+    fechaInicio: z.string().min(1, "Requerido"),
+    fechaFin: z.string().min(1, "Requerido"),
+    precioDesde: z.preprocess(
+      (v) => (v === "" || v === undefined ? undefined : v),
+      z.coerce.number().min(0, "No puede ser negativo").optional(),
+    ),
+  })
+  .refine((v) => !v.fechaInicio || !v.fechaFin || v.fechaFin > v.fechaInicio, {
+    message: "Debe ser posterior a la fecha de inicio",
+    path: ["fechaFin"],
+  });
 
 type FormValues = z.infer<typeof schema>;
 
@@ -51,14 +62,30 @@ export default function AdminDestinosPage() {
     setShowForm(false);
     setEditando(null);
     setImagenesNuevoDestino([]);
-    reset({ nombre: "", descripcion: "", pais: "", ciudad: "" });
+    reset({
+      nombre: "",
+      descripcion: "",
+      pais: "",
+      ciudad: "",
+      fechaInicio: "",
+      fechaFin: "",
+      precioDesde: undefined,
+    });
   };
 
   const abrirCreacion = () => {
     setEditando(null);
     setShowForm(true);
     setImagenesNuevoDestino([]);
-    reset({ nombre: "", descripcion: "", pais: "", ciudad: "" });
+    reset({
+      nombre: "",
+      descripcion: "",
+      pais: "",
+      ciudad: "",
+      fechaInicio: "",
+      fechaFin: "",
+      precioDesde: undefined,
+    });
   };
 
   const abrirEdicion = (d: Destino) => {
@@ -70,6 +97,9 @@ export default function AdminDestinosPage() {
       descripcion: d.descripcion,
       pais: d.pais,
       ciudad: d.ciudad,
+      fechaInicio: d.fechaInicio ?? "",
+      fechaFin: d.fechaFin ?? "",
+      precioDesde: d.precioDesde != null ? Number(d.precioDesde) : undefined,
     });
   };
 
@@ -155,6 +185,32 @@ export default function AdminDestinosPage() {
             <Input label="Nombre" error={errors.nombre?.message} {...register("nombre")} />
             <Input label="País" error={errors.pais?.message} {...register("pais")} />
             <Input label="Ciudad" error={errors.ciudad?.message} {...register("ciudad")} />
+            <Input
+              label="Fecha de inicio del servicio"
+              type="date"
+              error={errors.fechaInicio?.message}
+              {...register("fechaInicio")}
+            />
+            <Input
+              label="Fecha de fin del servicio"
+              type="date"
+              error={errors.fechaFin?.message}
+              {...register("fechaFin")}
+            />
+            <div>
+              <Input
+                label="Precio referencial (CLP, opcional)"
+                type="number"
+                step="0.01"
+                placeholder="Ej: 120000"
+                error={errors.precioDesde?.message}
+                {...register("precioDesde")}
+              />
+              <p className="text-xs text-ink-400 mt-1">
+                Se muestra como &quot;Desde $X&quot; en la vitrina. Déjalo vacío si no quieres
+                mostrar precio para este destino.
+              </p>
+            </div>
             <div className="sm:col-span-2">
               <Textarea
                 label="Descripción"
@@ -212,6 +268,16 @@ export default function AdminDestinosPage() {
                 <p className="font-medium text-ink-900 truncate">{d.nombre}</p>
                 <p className="text-xs text-ink-400">
                   {d.ciudad}, {d.pais}
+                  {d.precioDesde != null && (
+                    <> · Desde ${Number(d.precioDesde).toLocaleString("es-CL")}</>
+                  )}
+                  {d.fechaInicio && d.fechaFin && (
+                    <>
+                      {" "}
+                      · {new Date(`${d.fechaInicio}T00:00:00`).toLocaleDateString("es-CL")} al{" "}
+                      {new Date(`${d.fechaFin}T00:00:00`).toLocaleDateString("es-CL")}
+                    </>
+                  )}
                 </p>
               </div>
               <span

@@ -3,6 +3,8 @@ import { MapPin } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Card } from "@/components/ui/card";
 import { DestinoAcciones } from "@/components/destinos/destino-acciones";
+import { PrecioDestino } from "@/components/destinos/precio-destino";
+import { DisponibilidadDestino } from "@/components/destinos/disponibilidad-destino";
 import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
 import type { Destino } from "@/types";
 
@@ -36,6 +38,12 @@ export default async function DestinosPage() {
                 </div>
                 <h3 className="font-display text-lg font-semibold text-ink-900">{d.nombre}</h3>
                 <p className="mt-1.5 text-sm text-ink-600 line-clamp-3">{d.descripcion}</p>
+                <div className="mt-1.5">
+                  <PrecioDestino precioDesde={d.precioDesde} />
+                </div>
+                <div className="mt-1">
+                  <DisponibilidadDestino fechaInicio={d.fechaInicio} fechaFin={d.fechaFin} />
+                </div>
                 <DestinoAcciones destinoId={d.id} destinoNombre={d.nombre} />
               </div>
             </Card>

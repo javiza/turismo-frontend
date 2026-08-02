@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import type { ImagenGaleria } from "@/types";
 
-export type Carpeta = "destinos" | "paquetes" | "ofertas" | "contenido";
+export type Carpeta = "destinos" | "paquetes" | "ofertas" | "contenido" | "noticias";
 
 /**
  * Botón + input[type=file] oculto para subir una imagen desde el

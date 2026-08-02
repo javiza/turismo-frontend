@@ -25,7 +25,7 @@ export function Footer({
   const hayDatosContacto = Boolean(telefono || correo || direccion);
 
   return (
-    <footer className="border-t border-sun-100 bg-white/60 mt-24">
+    <footer className="border-t border-sun-100 bg-[var(--color-footer-app)]/60 mt-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 flex flex-col gap-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
@@ -34,7 +34,7 @@ export function Footer({
               <img
                 src={logoUrl}
                 alt={nombreAgencia}
-                className="h-14 w-auto max-w-[210px] object-contain"
+                className="h-28 w-auto max-w-[400px] object-contain"
                 onError={() => setLogoRoto(true)}
               />
             ) : (

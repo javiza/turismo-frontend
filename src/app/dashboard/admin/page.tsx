@@ -1,106 +1,57 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
-import { RefreshCcw, TrendingUp, Users, MapPinned, Package } from "lucide-react";
+  Compass,
+  MapPinned,
+  Package,
+  Tag,
+  Newspaper,
+  CalendarCheck,
+  BarChart3,
+  ArrowRight,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useSessionStore } from "@/store/session-store";
-import type {
-  AnalyticsDashboard,
-  TopItem,
-  TendenciaMensual,
-  VentasMensuales,
-} from "@/types";
+import type { AnalyticsDashboard, Noticia } from "@/types";
 
-const CHART_COLORS = {
-  primary: "#3b82f6", // clay-500
-  secondary: "#8ec7ff", // sun-400
-};
-
-export default function AdminAnalyticsPage() {
-  const queryClient = useQueryClient();
-  const role = useSessionStore((s) => s.adminProfile?.rol);
+export default function AdminHomePage() {
+  const nombre = useSessionStore((s) => s.adminProfile?.nombre);
 
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ["analytics-dashboard"],
     queryFn: () => apiFetch<AnalyticsDashboard>("/analytics/dashboard"),
   });
 
-  const { data: topDestinos } = useQuery({
-    queryKey: ["analytics-top-destinos"],
-    queryFn: () => apiFetch<TopItem[]>("/analytics/top-destinos"),
+  const { data: noticias } = useQuery({
+    queryKey: ["admin-noticias"],
+    queryFn: () => apiFetch<Noticia[]>("/noticias/admin/todas"),
   });
 
-  const { data: topPaquetes } = useQuery({
-    queryKey: ["analytics-top-paquetes"],
-    queryFn: () => apiFetch<TopItem[]>("/analytics/top-paquetes"),
-  });
-
-  const { data: tendencia } = useQuery({
-    queryKey: ["analytics-tendencia"],
-    queryFn: () => apiFetch<TendenciaMensual[]>("/analytics/tendencia-mensual"),
-  });
-
-  const { data: ventas } = useQuery({
-    queryKey: ["analytics-ventas"],
-    queryFn: () => apiFetch<VentasMensuales[]>("/analytics/ventas-mensuales"),
-  });
-
-  async function handleRefrescar() {
-    try {
-      await apiFetch("/analytics/refrescar-vistas", { method: "POST" });
-      toast.success("Vistas materializadas actualizadas");
-      queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["analytics-top-destinos"] });
-      queryClient.invalidateQueries({ queryKey: ["analytics-top-paquetes"] });
-      queryClient.invalidateQueries({ queryKey: ["analytics-tendencia"] });
-      queryClient.invalidateQueries({ queryKey: ["analytics-ventas"] });
-    } catch {
-      toast.error("No se pudo refrescar (requiere rol SUPER_ADMIN)");
-    }
-  }
+  const totalServicios =
+    dashboard != null
+      ? dashboard.total_destinos + dashboard.total_paquetes + dashboard.total_ofertas
+      : undefined;
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink-900">Big data</h1>
-          <p className="text-sm text-ink-600">Visitas, reservas, cotizaciones y ventas.</p>
-        </div>
-        {role === "SUPER_ADMIN" && (
-          <Button variant="secondary" size="sm" onClick={handleRefrescar}>
-            <RefreshCcw className="size-4" />
-            Refrescar vistas
-          </Button>
-        )}
+      <div>
+        <h1 className="font-display text-2xl font-semibold text-ink-900">
+          Hola{nombre ? `, ${nombre}` : ""} 👋
+        </h1>
+        <p className="text-sm text-ink-600">Resumen general de la agencia.</p>
       </div>
 
-      {/* Stat cards */}
+      {/* Total de servicios: destino + paquetes + ofertas publicados */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon={<Users className="size-5" />}
-          label="Visitas totales"
-          value={dashboard?.total_visitas}
+          icon={<Compass className="size-5" />}
+          label="Total de servicios"
+          value={totalServicios}
           loading={isLoading}
-        />
-        <StatCard
-          icon={<Package className="size-5" />}
-          label="Reservas"
-          value={dashboard?.total_reservas}
-          loading={isLoading}
+          highlight
         />
         <StatCard
           icon={<MapPinned className="size-5" />}
@@ -109,70 +60,54 @@ export default function AdminAnalyticsPage() {
           loading={isLoading}
         />
         <StatCard
-          icon={<TrendingUp className="size-5" />}
-          label="Paquetes / ofertas"
-          value={
-            dashboard
-              ? `${dashboard.total_paquetes} / ${dashboard.total_ofertas}`
-              : undefined
-          }
+          icon={<Package className="size-5" />}
+          label="Paquetes"
+          value={dashboard?.total_paquetes}
+          loading={isLoading}
+        />
+        <StatCard
+          icon={<Tag className="size-5" />}
+          label="Ofertas"
+          value={dashboard?.total_ofertas}
+          loading={isLoading}
+        />
+        <StatCard
+          icon={<CalendarCheck className="size-5" />}
+          label="Reservas"
+          value={dashboard?.total_reservas}
+          loading={isLoading}
+        />
+        <StatCard
+          icon={<Newspaper className="size-5" />}
+          label="Noticias"
+          value={noticias?.length}
           loading={isLoading}
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h3 className="font-medium text-ink-900 mb-4">Tendencia mensual de visitas</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={tendencia ?? []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffe4ad" />
-                <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="visitas"
-                  stroke={CHART_COLORS.primary}
-                  strokeWidth={2.5}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="font-medium text-ink-900 mb-4">Ventas e ingresos mensuales</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ventas ?? []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffe4ad" />
-                <XAxis
-                  dataKey="mes"
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(v) => new Date(v).toLocaleDateString("es-CL", { month: "short" })}
-                />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  labelFormatter={(v) => new Date(v as string).toLocaleDateString("es-CL")}
-                />
-                <Bar dataKey="ingresos" fill={CHART_COLORS.secondary} radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="font-medium text-ink-900 mb-4">Top destinos por visitas</h3>
-          <TopList items={topDestinos} />
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="font-medium text-ink-900 mb-4">Top paquetes por visitas</h3>
-          <TopList items={topPaquetes} />
-        </Card>
+      {/* Accesos rápidos */}
+      <div>
+        <h2 className="font-display text-lg font-semibold text-ink-900 mb-3">Accesos rápidos</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AccesoRapido
+            href="/dashboard/admin/noticias"
+            icon={<Newspaper className="size-5" />}
+            titulo="Noticias"
+            descripcion="Escribe, edita o elimina noticias para los clientes."
+          />
+          <AccesoRapido
+            href="/dashboard/admin/reservas"
+            icon={<CalendarCheck className="size-5" />}
+            titulo="Reservas"
+            descripcion="Revisa y gestiona las reservas de los clientes."
+          />
+          <AccesoRapido
+            href="/dashboard/admin/analytics"
+            icon={<BarChart3 className="size-5" />}
+            titulo="Big data"
+            descripcion="Estadísticas de visitas, ventas y tendencias."
+          />
+        </div>
       </div>
     </div>
   );
@@ -183,15 +118,21 @@ function StatCard({
   label,
   value,
   loading,
+  highlight,
 }: {
   icon: React.ReactNode;
   label: string;
   value?: string | number;
   loading: boolean;
+  highlight?: boolean;
 }) {
   return (
-    <Card className="p-5 flex items-center gap-4">
-      <div className="size-11 rounded-xl bg-sun-100 text-clay-600 flex items-center justify-center shrink-0">
+    <Card className={`p-5 flex items-center gap-4 ${highlight ? "ring-2 ring-clay-400" : ""}`}>
+      <div
+        className={`size-11 rounded-xl flex items-center justify-center shrink-0 ${
+          highlight ? "bg-clay-500 text-white" : "bg-sun-100 text-clay-600"
+        }`}
+      >
         {icon}
       </div>
       <div>
@@ -204,32 +145,29 @@ function StatCard({
   );
 }
 
-function TopList({ items }: { items?: TopItem[] }) {
-  if (!items || items.length === 0) {
-    return <p className="text-sm text-ink-400">Sin datos todavía.</p>;
-  }
-
-  const max = Math.max(...items.map((i) => i.visitas), 1);
-
+function AccesoRapido({
+  href,
+  icon,
+  titulo,
+  descripcion,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  titulo: string;
+  descripcion: string;
+}) {
   return (
-    <ul className="flex flex-col gap-3">
-      {items.map((item, idx) => (
-        <li key={item.id} className="flex items-center gap-3">
-          <span className="text-xs text-ink-400 w-4">{idx + 1}</span>
-          <div className="flex-1">
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-ink-800">{item.nombre}</span>
-              <span className="text-ink-400">{item.visitas}</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-sun-100 overflow-hidden">
-              <div
-                className="h-full bg-clay-500 rounded-full"
-                style={{ width: `${(item.visitas / max) * 100}%` }}
-              />
-            </div>
+    <Link href={href}>
+      <Card className="p-5 h-full hover:border-clay-300 transition-colors group">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="size-9 rounded-lg bg-sun-100 text-clay-600 flex items-center justify-center shrink-0">
+            {icon}
           </div>
-        </li>
-      ))}
-    </ul>
+          <h3 className="font-medium text-ink-900">{titulo}</h3>
+          <ArrowRight className="size-4 text-ink-300 ml-auto group-hover:translate-x-0.5 transition-transform" />
+        </div>
+        <p className="text-sm text-ink-500">{descripcion}</p>
+      </Card>
+    </Link>
   );
 }

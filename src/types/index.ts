@@ -60,6 +60,14 @@ export interface Destino {
   longitud?: number;
   imagenPrincipal?: string;
   imagenes?: ImagenGaleria[];
+  // Precio referencial ("Desde $X") que carga el admin. Independiente
+  // del precio de los paquetes asociados a este destino.
+  precioDesde?: number;
+  // Rango en que el destino está disponible como servicio. Obligatorio
+  // al crear un destino nuevo; opcional acá porque destinos creados
+  // antes de este cambio pueden no tenerlo cargado.
+  fechaInicio?: string;
+  fechaFin?: string;
   activo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -106,6 +114,9 @@ export interface ContenidoHome {
   sloganColor: string;
   sloganFontFamily: string;
   sloganFontUrl: string | null;
+  colorFondo: string | null;
+  colorNavbar: string | null;
+  colorFooter: string | null;
   titulo: string;
   subtitulo: string;
   presentacion: string;
@@ -139,6 +150,49 @@ export interface Oferta {
   createdAt: string;
 }
 
+export interface Noticia {
+  id: number;
+  titulo: string;
+  contenido: string;
+  imagenUrl?: string;
+  activa: boolean;
+  autorId?: number;
+  autor?: AdminUser;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TipoSlide = "destino" | "paquete" | "oferta" | "noticia";
+
+// Slide del carrusel de portada (sección "Inicio" del cliente), ya
+// resuelto contra el destino/paquete/oferta/noticia que referencia —
+// ver SlidesService.resolver en el backend.
+export interface HomeSlide {
+  id: number;
+  tipo: TipoSlide;
+  referenciaId: number;
+  orden: number;
+  activo: boolean;
+  titulo: string;
+  descripcion: string;
+  imagen: string | null;
+  precio: number | null;
+  precioAnterior: number | null;
+  descuento: number | null;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  paqueteId: number | null;
+  servicioVigente: boolean;
+}
+
+// Ítem elegible en el selector "Agregar al slide" del panel admin.
+export interface OpcionSlide {
+  id: number;
+  titulo: string;
+  imagen: string | null;
+  activo: boolean;
+}
+
 export type EstadoReserva = "PENDIENTE" | "CONFIRMADA" | "CANCELADA";
 
 export interface Reserva {
@@ -164,6 +218,8 @@ export interface Cotizacion {
   paquete?: Paquete;
   destinoId?: number;
   destino?: Destino;
+  noticiaId?: number;
+  noticia?: Noticia;
   clienteId?: number;
   nombre: string;
   email: string;

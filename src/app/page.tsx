@@ -1,22 +1,27 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ImagenSegura } from "@/components/shared/imagen-segura";
-import { ArrowRight, MapPin, Percent, CalendarDays, Compass, Eye, Heart, Star, Building2 } from "lucide-react";
+import { ArrowRight, MapPin, Percent, CalendarDays, Compass, Eye, Heart, Star, Building2, Newspaper } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PaqueteAcciones } from "@/components/paquetes/paquete-acciones";
 import { PrecioPaquete } from "@/components/paquetes/precio-paquete";
+import { IncluyeTour } from "@/components/paquetes/incluye-tour";
 import { DestinoAcciones } from "@/components/destinos/destino-acciones";
+import { PrecioDestino } from "@/components/destinos/precio-destino";
+import { DisponibilidadDestino } from "@/components/destinos/disponibilidad-destino";
 import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
 import { Carrusel, CarruselItem } from "@/components/shared/carrusel";
-import type { Destino, Paquete, Oferta, ContenidoHome } from "@/types";
+import { NoticiaConsultaBoton } from "@/components/noticias/noticia-consulta-boton";
+import type { Destino, Paquete, Oferta, ContenidoHome, Noticia } from "@/types";
 
 async function getHomeData() {
-  const [destinos, paquetes, ofertas, contenido] = await Promise.all([
+  const [destinos, paquetes, ofertas, noticias, contenido] = await Promise.all([
     callBackend<Destino[]>("/destinos", { revalidate: 60 }),
     callBackend<Paquete[]>("/paquetes", { revalidate: 60 }),
     callBackend<Oferta[]>("/ofertas", { revalidate: 60 }),
+    callBackend<Noticia[]>("/noticias", { revalidate: 60 }),
     callBackend<ContenidoHome>("/contenido-home", { revalidate: 60, tags: ["contenido-home"] }),
   ]);
 
@@ -24,12 +29,13 @@ async function getHomeData() {
     destinos: destinos.ok ? destinos.data.slice(0, 3) : [],
     paquetes: paquetes.ok ? paquetes.data.slice(0, 3) : [],
     ofertas: ofertas.ok ? ofertas.data.slice(0, 8) : [],
+    noticias: noticias.ok ? noticias.data.slice(0, 3) : [],
     contenido: contenido.ok ? contenido.data : null,
   };
 }
 
 export default async function HomePage() {
-  const { destinos, paquetes, ofertas, contenido } = await getHomeData();
+  const { destinos, paquetes, ofertas, noticias, contenido } = await getHomeData();
 
   return (
     <div>
@@ -123,6 +129,12 @@ export default async function HomePage() {
                   </div>
                   <h3 className="font-display text-lg font-semibold text-ink-900">{d.nombre}</h3>
                   <p className="mt-1.5 text-sm text-ink-600 line-clamp-2">{d.descripcion}</p>
+                  <div className="mt-1.5">
+                    <PrecioDestino precioDesde={d.precioDesde} />
+                  </div>
+                  <div className="mt-1">
+                    <DisponibilidadDestino fechaInicio={d.fechaInicio} fechaFin={d.fechaFin} />
+                  </div>
                   <DestinoAcciones destinoId={d.id} destinoNombre={d.nombre} />
                 </div>
               </Card>
@@ -162,6 +174,7 @@ export default async function HomePage() {
                   <CalendarDays className="size-3.5" />
                   {p.fechaInicio} — {p.fechaFin}
                 </div>
+                <IncluyeTour destino={p.destino} fechaInicio={p.fechaInicio} fechaFin={p.fechaFin} />
                 <div className="mt-auto flex items-center justify-between pt-2">
                   <PrecioPaquete precio={p.precio} precioAnterior={p.precioAnterior} />
                   <span className="text-xs text-ink-400">{p.cupos} cupos</span>
@@ -219,6 +232,43 @@ export default async function HomePage() {
               </CarruselItem>
             ))}
           </Carrusel>
+        </section>
+      )}
+
+      {/* Noticias */}
+      {noticias.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+          <div className="flex items-end justify-between mb-8">
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
+              Últimas noticias
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {noticias.map((n) => (
+              <Card key={n.id} className="overflow-hidden flex flex-col gap-3 p-0">
+                {n.imagenUrl && (
+                  <div className="relative h-40 bg-sun-100">
+                    <ImagenSegura src={n.imagenUrl} alt={n.titulo} fill className="object-cover" />
+                  </div>
+                )}
+                <div className="px-5 pb-5 pt-3 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 text-xs text-clay-600 font-medium">
+                    <Newspaper className="size-3.5" />
+                    {new Date(n.createdAt).toLocaleDateString("es-CL", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </div>
+                  <h3 className="font-display text-lg font-semibold text-ink-900">{n.titulo}</h3>
+                  <p className="text-sm text-ink-600 line-clamp-3">{n.contenido}</p>
+                  <div className="mt-2">
+                    <NoticiaConsultaBoton noticiaId={n.id} noticiaTitulo={n.titulo} />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </section>
       )}
 

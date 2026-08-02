@@ -4,6 +4,7 @@ import { callBackend } from "@/lib/backend";
 import { Card } from "@/components/ui/card";
 import { PaqueteAcciones } from "@/components/paquetes/paquete-acciones";
 import { PrecioPaquete } from "@/components/paquetes/precio-paquete";
+import { IncluyeTour } from "@/components/paquetes/incluye-tour";
 import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
 import type { Paquete } from "@/types";
 
@@ -37,6 +38,7 @@ export default async function PaquetesPage() {
                   <CalendarDays className="size-3.5" />
                   {p.fechaInicio} — {p.fechaFin}
                 </div>
+                <IncluyeTour destino={p.destino} fechaInicio={p.fechaInicio} fechaFin={p.fechaFin} />
                 <div className="mt-auto flex items-center justify-between pt-2">
                   <PrecioPaquete precio={p.precio} precioAnterior={p.precioAnterior} />
                   <span className="text-xs text-ink-400">{p.cupos} cupos</span>

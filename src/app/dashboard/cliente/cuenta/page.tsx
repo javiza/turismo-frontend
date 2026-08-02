@@ -7,7 +7,7 @@ import { apiFetch, ApiError } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { KeyRound, IdCard } from "lucide-react";
+import { KeyRound, IdCard, Mail } from "lucide-react";
 import type { Cliente } from "@/types";
 
 export default function MiCuentaPage() {
@@ -104,6 +104,14 @@ export default function MiCuentaPage() {
             }}
             className="flex flex-col gap-3"
           >
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-ink-800">Correo</label>
+              <div className="flex items-center gap-2 rounded-lg border border-ink-100 bg-ink-50/60 px-3 py-2 text-sm text-ink-600">
+                <Mail className="size-4 text-ink-400 shrink-0" />
+                <span className="truncate">{perfil?.email ?? "—"}</span>
+              </div>
+              <p className="text-xs text-ink-400">El correo no se puede modificar.</p>
+            </div>
             <Input label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
             <Input
               label="Teléfono"

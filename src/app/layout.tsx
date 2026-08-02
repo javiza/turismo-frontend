@@ -88,6 +88,9 @@ async function getContenidoBasico(): Promise<{
   sloganColor: string;
   sloganFontFamily: string;
   sloganFontUrl: string | null;
+  colorFondo: string | null;
+  colorNavbar: string | null;
+  colorFooter: string | null;
   telefono: string | null;
   correo: string | null;
   direccion: string | null;
@@ -103,6 +106,9 @@ async function getContenidoBasico(): Promise<{
       sloganColor: "#c2410c",
       sloganFontFamily: "caveat",
       sloganFontUrl: null,
+      colorFondo: null,
+      colorNavbar: null,
+      colorFooter: null,
       telefono: null,
       correo: null,
       direccion: null,
@@ -114,6 +120,9 @@ async function getContenidoBasico(): Promise<{
     sloganColor: res.data.sloganColor || "#c2410c",
     sloganFontFamily: res.data.sloganFontFamily || "caveat",
     sloganFontUrl: res.data.sloganFontUrl || null,
+    colorFondo: res.data.colorFondo || null,
+    colorNavbar: res.data.colorNavbar || null,
+    colorFooter: res.data.colorFooter || null,
     telefono: res.data.telefono || null,
     correo: res.data.correo || null,
     direccion: res.data.direccion || null,
@@ -135,6 +144,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     sloganColor,
     sloganFontFamily,
     sloganFontUrl,
+    colorFondo,
+    colorNavbar,
+    colorFooter,
     telefono,
     correo,
     direccion,
@@ -148,6 +160,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${fraunces.variable} ${inter.variable} ${caveat.variable} ${dancingScript.variable} ${pacifico.variable} ${sacramento.variable} ${shadowsIntoLight.variable}`}
     >
       <body className="min-h-screen flex flex-col antialiased">
+        {/* Paleta personalizada del sitio (color de fondo / navbar),
+            elegida por el admin desde el panel (Contenido → Portada).
+            Se inyecta como override de las variables por defecto
+            declaradas en globals.css — si el admin no eligió un color
+            propio, no se renderiza nada y se usan los valores por
+            defecto. */}
+        {(colorFondo || colorNavbar || colorFooter) && (
+          <style>{`
+            :root {
+              ${colorFondo ? `--color-fondo-app: ${colorFondo};` : ""}
+              ${colorNavbar ? `--color-navbar-app: ${colorNavbar};` : ""}
+              ${colorFooter ? `--color-footer-app: ${colorFooter};` : ""}
+            }
+          `}</style>
+        )}
         {/* Tipografía propia subida por el admin para el slogan (si la
             hay): se declara acá porque la URL es dinámica (dato de BD),
             así que no puede resolverse en build time como los next/font

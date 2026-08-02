@@ -37,7 +37,7 @@ export function SkyBackground({ className }: { className?: string }) {
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, white 0%, var(--color-cream) 35%, var(--color-ocean-100) 100%)",
+            "linear-gradient(180deg, white 0%, var(--color-fondo-app) 35%, var(--color-ocean-100) 100%)",
         }}
       />
 

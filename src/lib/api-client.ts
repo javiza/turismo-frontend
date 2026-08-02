@@ -70,7 +70,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
  */
 export async function subirImagen(
   archivo: File,
-  carpeta: "destinos" | "paquetes" | "ofertas" | "contenido",
+  carpeta: "destinos" | "paquetes" | "ofertas" | "contenido" | "noticias",
 ): Promise<{ url: string }> {
   const formData = new FormData();
   formData.append("archivo", archivo);

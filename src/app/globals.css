@@ -62,6 +62,14 @@
   --color-danger: #d9432f;
   --color-info: #1c8fe0;
 
+  /* Personalizables desde el panel admin (Contenido → Portada). Si el
+     admin no eligió un color propio, caen de vuelta a --color-cream.
+     Ver RootLayout (app/layout.tsx), que inyecta el override real por
+     encima de estos valores por defecto cuando corresponde. */
+  --color-fondo-app: var(--color-cream);
+  --color-navbar-app: var(--color-cream);
+  --color-footer-app: var(--color-navbar-app);
+
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   /* Nota: las tipografías del slogan (Caveat y alternativas) ya no se
@@ -78,9 +86,11 @@ html {
 
 body {
   /* Fondo de pantalla general: degradado de blanco (arriba, por la
-     iluminación del sol) a celeste (abajo). `fixed` para que no se corte
-     ni se repita al hacer scroll en páginas largas. */
-  background: linear-gradient(180deg, #ffffff 0%, var(--color-cream) 30%, var(--color-ocean-100) 100%)
+     iluminación del sol) a --color-fondo-app (el admin puede
+     personalizarlo desde el panel; por defecto es el mismo celeste de
+     siempre). `fixed` para que no se corte ni se repita al hacer scroll
+     en páginas largas. */
+  background: linear-gradient(180deg, #ffffff 0%, var(--color-fondo-app) 30%, var(--color-ocean-100) 100%)
     fixed;
   color: var(--color-ink-900);
   font-family: var(--font-sans);
