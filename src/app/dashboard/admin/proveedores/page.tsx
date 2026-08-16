@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Building2, Mail, Phone, MapPin, CheckCheck, Trash2 } from "lucide-react";
+import { Building2, Mail, Phone, MapPin, CheckCheck, Trash2, Tag } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,8 +99,17 @@ export default function AdminProveedoresPage() {
             <Card key={p.id} className={`p-5 ${!p.leido ? "border-clay-300" : ""}`}>
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="flex items-start gap-3">
-                  <div className="size-10 rounded-xl bg-sun-100 text-clay-600 flex items-center justify-center shrink-0">
-                    <Building2 className="size-5" />
+                  <div className="size-10 rounded-xl bg-sun-100 text-clay-600 flex items-center justify-center shrink-0 overflow-hidden">
+                    {p.imagenUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.imagenUrl}
+                        alt={p.nombreNegocio}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Building2 className="size-5" />
+                    )}
                   </div>
                   <div>
                     <p className="font-medium text-ink-900">
@@ -148,6 +157,12 @@ export default function AdminProveedoresPage() {
                 {p.direccion && (
                   <span className="flex items-center gap-1.5">
                     <MapPin className="size-3.5 text-ink-400" /> {p.direccion}
+                  </span>
+                )}
+                {p.precioReferencial != null && (
+                  <span className="flex items-center gap-1.5">
+                    <Tag className="size-3.5 text-ink-400" /> Referencial: $
+                    {Number(p.precioReferencial).toLocaleString("es-CL")}
                   </span>
                 )}
               </div>

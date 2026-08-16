@@ -16,7 +16,6 @@ import { callBackend } from "@/lib/backend";
 import { NOMBRE_FUENTE_CUSTOM, resolverFontFamilySlogan } from "@/lib/slogan-fonts";
 import type { ContenidoHome } from "@/types";
 
-// @ts-ignore: CSS module declarations may be missing in the project typings
 import "./globals.css";
 
 const fraunces = Fraunces({

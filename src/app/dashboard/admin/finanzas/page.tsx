@@ -35,6 +35,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import { AdministracionPanel } from "@/components/admin/administracion-panel";
+import { PasswordGate } from "@/components/admin/password-gate";
 import type {
   ResumenFinanciero,
   IngresoMensual,
@@ -153,7 +155,7 @@ const schemaMovimiento = z
 
 type MovimientoFormValues = z.infer<typeof schemaMovimiento>;
 
-export default function AdminFinanzasPage() {
+function FinanzasContenido() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [filtroHistorial, setFiltroHistorial] = useState<"TODOS" | "GASTOS">("TODOS");
@@ -773,6 +775,9 @@ export default function AdminFinanzasPage() {
             );
           })()}
       </Card>
+
+      {/* Administración: sección protegida con contraseña (incluye Análisis) */}
+      <AdministracionPanel />
     </div>
   );
 }
@@ -846,5 +851,19 @@ function RankingIngresos({ items }: { items?: IngresoPorItem[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+// Toda la sección de Finanzas queda protegida con contraseña (no solo
+// "Administración" dentro de ella): se pide al entrar al botón
+// "Finanzas" del panel admin.
+export default function AdminFinanzasPage() {
+  return (
+    <PasswordGate
+      titulo="Finanzas"
+      descripcion="Ingresa tu contraseña de administrador para ver esta sección."
+    >
+      <FinanzasContenido />
+    </PasswordGate>
   );
 }

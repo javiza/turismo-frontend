@@ -20,8 +20,8 @@ import {
   ClipboardList,
   ChevronDown,
   Newspaper,
-  BarChart3,
   GalleryHorizontal,
+  PencilRuler,
 } from "lucide-react";
 import { useConsultasNoLeidas } from "@/hooks/use-consultas-no-leidas";
 import { useProveedoresNoLeidos } from "@/hooks/use-proveedores-no-leidos";
@@ -32,6 +32,11 @@ const SERVICIOS = [
   { href: "/dashboard/admin/ofertas", label: "Ofertas", icon: Tag },
 ];
 
+const EDICION_APP = [
+  { href: "/dashboard/admin/contenido", label: "Contenido home", icon: FileText },
+  { href: "/dashboard/admin/slides", label: "Slide de portada", icon: GalleryHorizontal },
+];
+
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const noLeidas = useConsultasNoLeidas();
   const proveedoresNoLeidos = useProveedoresNoLeidos();
@@ -39,6 +44,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
   const servicioActivo = SERVICIOS.some((s) => pathname.startsWith(s.href));
   const [serviciosAbierto, setServiciosAbierto] = useState(servicioActivo);
+
+  const edicionActiva = EDICION_APP.some((s) => pathname.startsWith(s.href));
+  const [edicionAbierta, setEdicionAbierta] = useState(edicionActiva);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 grid lg:grid-cols-[220px_1fr] gap-8">
@@ -54,13 +62,6 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           >
             <LayoutDashboard className="size-4" />
             Inicio
-          </Link>
-          <Link
-            href="/dashboard/admin/analytics"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
-          >
-            <BarChart3 className="size-4" />
-            Big data
           </Link>
           <Link
             href="/dashboard/admin/noticias"
@@ -120,20 +121,41 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             </div>
           )}
 
-          <Link
-            href="/dashboard/admin/contenido"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
+          <button
+            type="button"
+            onClick={() => setEdicionAbierta((v) => !v)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium w-full text-left ${
+              edicionActiva ? "text-clay-600" : "text-ink-800 hover:bg-sun-100"
+            }`}
+            aria-expanded={edicionAbierta}
           >
-            <FileText className="size-4" />
-            Contenido home
-          </Link>
-          <Link
-            href="/dashboard/admin/slides"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
-          >
-            <GalleryHorizontal className="size-4" />
-            Slide de portada
-          </Link>
+            <PencilRuler className="size-4" />
+            Edición app
+            <ChevronDown
+              className={`size-4 ml-auto transition-transform ${edicionAbierta ? "rotate-180" : ""}`}
+            />
+          </button>
+          {edicionAbierta && (
+            <div className="flex flex-col gap-1 pl-4 border-l border-sun-200 ml-4">
+              {EDICION_APP.map(({ href, label, icon: Icon }) => {
+                const activo = pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium ${
+                      activo
+                        ? "bg-clay-500 text-white"
+                        : "text-ink-800 hover:bg-sun-100"
+                    }`}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
           <Link
             href="/dashboard/admin/consultas-clientes"
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"

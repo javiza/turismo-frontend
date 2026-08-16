@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ListaContactos } from "@/components/shared/lista-contactos";
 import { useSessionStore } from "@/store/session-store";
 
 const schema = z.object({
@@ -25,6 +26,8 @@ export default function RegistroPage() {
   const router = useRouter();
   const setSession = useSessionStore((s) => s.setSession);
   const [loading, setLoading] = useState(false);
+  const [telefonosAdicionales, setTelefonosAdicionales] = useState<string[]>([]);
+  const [correosAdicionales, setCorreosAdicionales] = useState<string[]>([]);
 
   const {
     register,
@@ -38,7 +41,13 @@ export default function RegistroPage() {
       const res = await fetch("/api/auth/cliente/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          telefonosAdicionales: telefonosAdicionales
+            .map((t) => t.trim())
+            .filter(Boolean),
+          correosAdicionales: correosAdicionales.map((c) => c.trim()).filter(Boolean),
+        }),
       });
 
       const data = await res.json();
@@ -89,6 +98,20 @@ export default function RegistroPage() {
             placeholder="+56 9 1234 5678"
             error={errors.telefono?.message}
             {...register("telefono")}
+          />
+          <ListaContactos
+            label="Teléfonos adicionales (opcional)"
+            placeholder="+56 9 8765 4321"
+            type="tel"
+            values={telefonosAdicionales}
+            onChange={setTelefonosAdicionales}
+          />
+          <ListaContactos
+            label="Correos adicionales (opcional)"
+            placeholder="otro@ejemplo.com"
+            type="email"
+            values={correosAdicionales}
+            onChange={setCorreosAdicionales}
           />
           <Input
             label="Contraseña"

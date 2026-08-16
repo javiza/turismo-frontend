@@ -91,6 +91,31 @@ export async function subirImagen(
 }
 
 /**
+ * Sube la imagen del formulario público "Contacto proveedores" hacia
+ * POST /proveedores/imagen. A diferencia de subirImagen(), este endpoint
+ * es público (sin JWT) porque quien llena ese formulario todavía no
+ * tiene sesión con la agencia.
+ */
+export async function subirImagenProveedor(archivo: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+
+  const res = await fetch(`/api/backend/proveedores/imagen`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!res.ok) {
+    throw new ApiError(res.status, extractMessage(data, "No se pudo subir la imagen"), data);
+  }
+
+  return data as { url: string };
+}
+
+/**
  * Sube un archivo de tipografía (.ttf/.otf/.woff/.woff2) para el slogan
  * de la home. Va aparte de subirImagen porque el backend valida
  * extensión/tamaño distintos y lo sube como recurso "raw" a Cloudinary.

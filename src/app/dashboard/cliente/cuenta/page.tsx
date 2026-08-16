@@ -7,7 +7,8 @@ import { apiFetch, ApiError } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { KeyRound, IdCard, Mail } from "lucide-react";
+import { ListaContactos } from "@/components/shared/lista-contactos";
+import { KeyRound, IdCard } from "lucide-react";
 import type { Cliente } from "@/types";
 
 export default function MiCuentaPage() {
@@ -19,8 +20,11 @@ export default function MiCuentaPage() {
   });
 
   const [nombre, setNombre] = useState(perfil?.nombre ?? "");
+  const [email, setEmail] = useState(perfil?.email ?? "");
   const [telefono, setTelefono] = useState(perfil?.telefono ?? "");
   const [rut, setRut] = useState(perfil?.rut ?? "");
+  const [telefonosAdicionales, setTelefonosAdicionales] = useState<string[]>([]);
+  const [correosAdicionales, setCorreosAdicionales] = useState<string[]>([]);
   const [datosInicializados, setDatosInicializados] = useState(false);
 
   // El perfil llega asíncrono (useQuery), así que precargamos los
@@ -29,8 +33,11 @@ export default function MiCuentaPage() {
   useEffect(() => {
     if (perfil && !datosInicializados) {
       setNombre(perfil.nombre);
+      setEmail(perfil.email);
       setTelefono(perfil.telefono ?? "");
       setRut(perfil.rut ?? "");
+      setTelefonosAdicionales(perfil.telefonosAdicionales ?? []);
+      setCorreosAdicionales(perfil.correosAdicionales ?? []);
       setDatosInicializados(true);
     }
   }, [perfil, datosInicializados]);
@@ -39,10 +46,21 @@ export default function MiCuentaPage() {
     mutationFn: () =>
       apiFetch<Cliente>("/clientes-auth/perfil", {
         method: "PATCH",
-        body: JSON.stringify({ nombre, telefono, rut }),
+        body: JSON.stringify({
+          nombre,
+          email,
+          telefono,
+          rut,
+          telefonosAdicionales: telefonosAdicionales.map((t) => t.trim()).filter(Boolean),
+          correosAdicionales: correosAdicionales.map((c) => c.trim()).filter(Boolean),
+        }),
       }),
-    onSuccess: () => {
-      toast.success("Datos actualizados");
+    onSuccess: (data) => {
+      toast.success(
+        data.email !== perfil?.email
+          ? "Datos actualizados. Usa tu nuevo correo la próxima vez que inicies sesión."
+          : "Datos actualizados",
+      );
       queryClient.invalidateQueries({ queryKey: ["cliente-perfil"] });
     },
     onError: (err) => {
@@ -104,13 +122,17 @@ export default function MiCuentaPage() {
             }}
             className="flex flex-col gap-3"
           >
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-ink-800">Correo</label>
-              <div className="flex items-center gap-2 rounded-lg border border-ink-100 bg-ink-50/60 px-3 py-2 text-sm text-ink-600">
-                <Mail className="size-4 text-ink-400 shrink-0" />
-                <span className="truncate">{perfil?.email ?? "—"}</span>
-              </div>
-              <p className="text-xs text-ink-400">El correo no se puede modificar.</p>
+            <div className="flex flex-col gap-1.5">
+              <Input
+                label="Correo"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <p className="text-xs text-ink-400">
+                Es el correo con el que inicias sesión: si lo cambias, úsalo la próxima vez.
+              </p>
             </div>
             <Input label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
             <Input
@@ -123,6 +145,20 @@ export default function MiCuentaPage() {
               placeholder="12.345.678-9"
               value={rut}
               onChange={(e) => setRut(e.target.value)}
+            />
+            <ListaContactos
+              label="Teléfonos adicionales"
+              placeholder="+56 9 8765 4321"
+              type="tel"
+              values={telefonosAdicionales}
+              onChange={setTelefonosAdicionales}
+            />
+            <ListaContactos
+              label="Correos adicionales"
+              placeholder="otro@ejemplo.com"
+              type="email"
+              values={correosAdicionales}
+              onChange={setCorreosAdicionales}
             />
             <Button
               type="submit"

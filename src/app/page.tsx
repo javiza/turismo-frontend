@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ImagenSegura } from "@/components/shared/imagen-segura";
-import { ArrowRight, MapPin, Percent, CalendarDays, Compass, Eye, Heart, Star, Building2, Newspaper } from "lucide-react";
+import { ArrowRight, MapPin, Percent, CalendarDays, Compass, Eye, Heart, Star, Building2 } from "lucide-react";
 import { callBackend } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { PrecioDestino } from "@/components/destinos/precio-destino";
 import { DisponibilidadDestino } from "@/components/destinos/disponibilidad-destino";
 import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
 import { Carrusel, CarruselItem } from "@/components/shared/carrusel";
-import { NoticiaConsultaBoton } from "@/components/noticias/noticia-consulta-boton";
+import { NoticiasSidebar } from "@/components/noticias/noticias-sidebar";
 import type { Destino, Paquete, Oferta, ContenidoHome, Noticia } from "@/types";
 
 async function getHomeData() {
@@ -29,7 +29,7 @@ async function getHomeData() {
     destinos: destinos.ok ? destinos.data.slice(0, 3) : [],
     paquetes: paquetes.ok ? paquetes.data.slice(0, 3) : [],
     ofertas: ofertas.ok ? ofertas.data.slice(0, 8) : [],
-    noticias: noticias.ok ? noticias.data.slice(0, 3) : [],
+    noticias: noticias.ok ? noticias.data.slice(0, 5) : [],
     contenido: contenido.ok ? contenido.data : null,
   };
 }
@@ -235,80 +235,79 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Noticias */}
-      {noticias.length > 0 && (
+      {/* Quiénes somos + Noticias: quedan en la misma sección para que las
+          noticias vayan "a un costado" (columna lateral compacta, solo
+          título y descripción) en vez de ser su propio bloque de ancho
+          completo. */}
+      {(noticias.length > 0 ||
+        (contenido &&
+          (contenido.presentacion || contenido.mision || contenido.vision || contenido.valores))) && (
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
-          <div className="flex items-end justify-between mb-8">
-            <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
-              Últimas noticias
-            </h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {noticias.map((n) => (
-              <Card key={n.id} className="overflow-hidden flex flex-col gap-3 p-0">
-                {n.imagenUrl && (
-                  <div className="relative h-40 bg-sun-100">
-                    <ImagenSegura src={n.imagenUrl} alt={n.titulo} fill className="object-cover" />
-                  </div>
+          <div
+            className={
+              noticias.length > 0 ? "grid lg:grid-cols-[1fr_320px] gap-10 items-start" : ""
+            }
+          >
+            <div>
+              {contenido &&
+                (contenido.presentacion ||
+                  contenido.mision ||
+                  contenido.vision ||
+                  contenido.valores) && (
+                  <>
+                    <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900 mb-8">
+                      Quiénes somos
+                    </h2>
+
+                    {contenido.presentacion && (
+                      <p className="text-ink-600 max-w-3xl mb-10 leading-relaxed">
+                        {contenido.presentacion}
+                      </p>
+                    )}
+
+                    <div className="grid sm:grid-cols-3 gap-6">
+                      {contenido.mision && (
+                        <Card className="p-6">
+                          <Compass className="size-6 text-clay-600 mb-3" />
+                          <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
+                            Misión
+                          </h3>
+                          <p className="text-sm text-ink-600 leading-relaxed">
+                            {contenido.mision}
+                          </p>
+                        </Card>
+                      )}
+                      {contenido.vision && (
+                        <Card className="p-6">
+                          <Eye className="size-6 text-clay-600 mb-3" />
+                          <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
+                            Visión
+                          </h3>
+                          <p className="text-sm text-ink-600 leading-relaxed">
+                            {contenido.vision}
+                          </p>
+                        </Card>
+                      )}
+                      {contenido.valores && (
+                        <Card className="p-6">
+                          <Heart className="size-6 text-clay-600 mb-3" />
+                          <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
+                            Valores
+                          </h3>
+                          <p className="text-sm text-ink-600 leading-relaxed">
+                            {contenido.valores}
+                          </p>
+                        </Card>
+                      )}
+                    </div>
+                  </>
                 )}
-                <div className="px-5 pb-5 pt-3 flex flex-col gap-1.5">
-                  <div className="flex items-center gap-1.5 text-xs text-clay-600 font-medium">
-                    <Newspaper className="size-3.5" />
-                    {new Date(n.createdAt).toLocaleDateString("es-CL", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </div>
-                  <h3 className="font-display text-lg font-semibold text-ink-900">{n.titulo}</h3>
-                  <p className="text-sm text-ink-600 line-clamp-3">{n.contenido}</p>
-                  <div className="mt-2">
-                    <NoticiaConsultaBoton noticiaId={n.id} noticiaTitulo={n.titulo} />
-                  </div>
-                </div>
-              </Card>
-            ))}
+            </div>
+
+            <NoticiasSidebar noticias={noticias} />
           </div>
         </section>
       )}
-
-      {/* Quiénes somos: presentación, misión, visión y valores (editable desde el panel admin) */}
-      {contenido &&
-        (contenido.presentacion || contenido.mision || contenido.vision || contenido.valores) && (
-          <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
-            <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900 mb-8">
-              Quiénes somos
-            </h2>
-
-            {contenido.presentacion && (
-              <p className="text-ink-600 max-w-3xl mb-10 leading-relaxed">{contenido.presentacion}</p>
-            )}
-
-            <div className="grid sm:grid-cols-3 gap-6">
-              {contenido.mision && (
-                <Card className="p-6">
-                  <Compass className="size-6 text-clay-600 mb-3" />
-                  <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">Misión</h3>
-                  <p className="text-sm text-ink-600 leading-relaxed">{contenido.mision}</p>
-                </Card>
-              )}
-              {contenido.vision && (
-                <Card className="p-6">
-                  <Eye className="size-6 text-clay-600 mb-3" />
-                  <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">Visión</h3>
-                  <p className="text-sm text-ink-600 leading-relaxed">{contenido.vision}</p>
-                </Card>
-              )}
-              {contenido.valores && (
-                <Card className="p-6">
-                  <Heart className="size-6 text-clay-600 mb-3" />
-                  <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">Valores</h3>
-                  <p className="text-sm text-ink-600 leading-relaxed">{contenido.valores}</p>
-                </Card>
-              )}
-            </div>
-          </section>
-        )}
 
       {/* Reseñas de clientes (editable desde el panel admin) */}
       {contenido && contenido.resenas.length > 0 && (

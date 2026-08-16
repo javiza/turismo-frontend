@@ -20,6 +20,8 @@ export interface Cliente {
   rut?: string | null;
   activo: boolean;
   createdAt?: string;
+  telefonosAdicionales?: string[];
+  correosAdicionales?: string[];
 }
 
 export interface AuthTokens {
@@ -307,6 +309,8 @@ export interface Proveedor {
   telefono: string;
   direccion?: string;
   descripcion: string;
+  imagenUrl?: string;
+  precioReferencial?: number;
   leido: boolean;
   createdAt: string;
 }

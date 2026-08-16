@@ -9,7 +9,7 @@ import {
   Tag,
   Newspaper,
   CalendarCheck,
-  BarChart3,
+  Wallet,
   ArrowRight,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
@@ -102,10 +102,10 @@ export default function AdminHomePage() {
             descripcion="Revisa y gestiona las reservas de los clientes."
           />
           <AccesoRapido
-            href="/dashboard/admin/analytics"
-            icon={<BarChart3 className="size-5" />}
-            titulo="Big data"
-            descripcion="Estadísticas de visitas, ventas y tendencias."
+            href="/dashboard/admin/finanzas"
+            icon={<Wallet className="size-5" />}
+            titulo="Finanzas"
+            descripcion="Movimientos, reportes y, dentro de Administración, el Análisis de visitas y ventas."
           />
         </div>
       </div>
