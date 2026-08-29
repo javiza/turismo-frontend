@@ -3,11 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch, ApiError } from "@/lib/api-client";
+import { iniciarPagoWebpay } from "@/lib/webpay";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
-import { CalendarDays, MessageSquareText, Wallet, MapPin, XCircle } from "lucide-react";
+import { CalendarDays, MessageSquareText, Wallet, MapPin, XCircle, CreditCard } from "lucide-react";
+import { useState } from "react";
 import type { Reserva, Cotizacion } from "@/types";
 
 const estadoStyles: Record<string, string> = {
@@ -30,6 +32,7 @@ function formatoCLP(valor: number): string {
 
 export default function MisViajesPage() {
   const queryClient = useQueryClient();
+  const [pagandoId, setPagandoId] = useState<number | null>(null);
 
   const { data: reservas, isLoading: loadingReservas } = useQuery({
     queryKey: ["mis-reservas"],
@@ -56,6 +59,19 @@ export default function MisViajesPage() {
   function confirmarCancelacion(id: number, nombrePaquete: string) {
     if (window.confirm(`¿Seguro que quieres cancelar la reserva de "${nombrePaquete}"?`)) {
       cancelarReserva.mutate(id);
+    }
+  }
+
+  async function pagarConTarjeta(id: number) {
+    setPagandoId(id);
+    try {
+      await iniciarPagoWebpay(id);
+      // Si no lanzó, el navegador ya está navegando hacia Webpay.
+    } catch (err) {
+      setPagandoId(null);
+      toast.error(
+        err instanceof ApiError ? err.message : "No se pudo iniciar el pago con tarjeta",
+      );
     }
   }
 
@@ -128,24 +144,40 @@ export default function MisViajesPage() {
                           (a confirmar por la agencia)
                         </span>
                       )}
+                      {r.metodoPago === "WEBPAY" && (
+                        <span className="text-xs font-normal text-success">
+                          · pagado con tarjeta
+                        </span>
+                      )}
                     </p>
                   )}
-                  {r.estado !== "CANCELADA" && (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      className="mt-3"
-                      disabled={cancelarReserva.isPending && cancelarReserva.variables === r.id}
-                      onClick={() =>
-                        confirmarCancelacion(r.id, r.paquete?.nombre ?? `Paquete #${r.paqueteId}`)
-                      }
-                    >
-                      <XCircle className="size-4" />
-                      {cancelarReserva.isPending && cancelarReserva.variables === r.id
-                        ? "Cancelando..."
-                        : "Cancelar reserva"}
-                    </Button>
-                  )}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {r.estado !== "CANCELADA" && r.metodoPago !== "WEBPAY" && (
+                      <Button
+                        size="sm"
+                        disabled={pagandoId === r.id}
+                        onClick={() => pagarConTarjeta(r.id)}
+                      >
+                        <CreditCard className="size-4" />
+                        {pagandoId === r.id ? "Redirigiendo..." : "Pagar con tarjeta"}
+                      </Button>
+                    )}
+                    {r.estado !== "CANCELADA" && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        disabled={cancelarReserva.isPending && cancelarReserva.variables === r.id}
+                        onClick={() =>
+                          confirmarCancelacion(r.id, r.paquete?.nombre ?? `Paquete #${r.paqueteId}`)
+                        }
+                      >
+                        <XCircle className="size-4" />
+                        {cancelarReserva.isPending && cancelarReserva.variables === r.id
+                          ? "Cancelando..."
+                          : "Cancelar reserva"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}

@@ -210,6 +210,8 @@ export interface Reserva {
   montoTotal?: number;
   estado: EstadoReserva;
   fechaReserva: string;
+  metodoPago?: "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "WEBPAY" | "OTRO" | null;
+  pagadoEn?: string | null;
 }
 
 export type EstadoCotizacion = "PENDIENTE" | "RESPONDIDA" | "CERRADA";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -19,7 +19,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function LoginClientePage() {
+function LoginClienteForm() {
   const router = useRouter();
   const params = useSearchParams();
   const setSession = useSessionStore((s) => s.setSession);
@@ -108,5 +108,16 @@ export default function LoginClientePage() {
         </p>
       </Card>
     </div>
+  );
+}
+
+// useSearchParams() exige un boundary de Suspense en App Router para
+// poder pre-renderizar la página en el build (si no, "next build" falla
+// con "useSearchParams() should be wrapped in a suspense boundary").
+export default function LoginClientePage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginClienteForm />
+    </Suspense>
   );
 }

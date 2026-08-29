@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSessionStore } from "@/store/session-store";
 import { useRegistrarVisita } from "@/lib/use-registrar-visita";
-import type { Paquete } from "@/types";
+import { PagarReservaPaso } from "@/components/paquetes/paquete-acciones";
+import type { Paquete, Reserva } from "@/types";
 
 const consultaSchema = z.object({
   nombre: z.string().min(1, "Requerido").max(150),
@@ -121,6 +122,10 @@ function ReservarDestinoModal({
   const role = useSessionStore((s) => s.role);
   const queryClient = useQueryClient();
 
+  // Igual que en PaqueteAcciones: una vez creada la reserva, el modal
+  // pasa a ofrecer pagarla al tiro con Webpay.
+  const [reservaCreada, setReservaCreada] = useState<Reserva | null>(null);
+
   // Trae todos los paquetes públicos y filtra por destino en el cliente:
   // no hay (ni hace falta) un endpoint propio de "paquetes por destino".
   const { data: paquetes, isLoading } = useQuery({
@@ -145,7 +150,7 @@ function ReservarDestinoModal({
 
   const reservar = useMutation({
     mutationFn: (values: ReservaValues) =>
-      apiFetch("/reservas", {
+      apiFetch<Reserva>("/reservas", {
         method: "POST",
         body: JSON.stringify({
           ...values,
@@ -153,17 +158,25 @@ function ReservarDestinoModal({
           telefono: values.telefono || undefined,
         }),
       }),
-    onSuccess: () => {
-      toast.success("¡Reserva enviada! Queda pendiente de confirmación.");
+    onSuccess: (reserva) => {
+      toast.success("¡Reserva creada! Puedes pagarla ahora o dejarla pendiente.");
       if (role === "cliente") {
         queryClient.invalidateQueries({ queryKey: ["mis-reservas"] });
       }
-      onClose();
+      setReservaCreada(reserva);
     },
     onError: (err) => {
       toast.error(err instanceof ApiError ? err.message : "No se pudo crear la reserva");
     },
   });
+
+  if (reservaCreada) {
+    return (
+      <ModalShell title={`Reservar en: ${destinoNombre}`} onClose={onClose}>
+        <PagarReservaPaso reserva={reservaCreada} onClose={onClose} />
+      </ModalShell>
+    );
+  }
 
   return (
     <ModalShell title={`Reservar en: ${destinoNombre}`} onClose={onClose}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function LoginAdminPage() {
+function LoginAdminForm() {
   const router = useRouter();
   const params = useSearchParams();
   const setSession = useSessionStore((s) => s.setSession);
@@ -86,5 +86,15 @@ export default function LoginAdminPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+// Mismo motivo que en /login: useSearchParams() necesita un Suspense
+// boundary para que "next build" pueda pre-renderizar la página.
+export default function LoginAdminPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginAdminForm />
+    </Suspense>
   );
 }

@@ -6,14 +6,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { X, CalendarCheck, MessageCircleQuestion } from "lucide-react";
+import { X, CalendarCheck, MessageCircleQuestion, CreditCard, CheckCircle2 } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api-client";
+import { iniciarPagoWebpay } from "@/lib/webpay";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSessionStore } from "@/store/session-store";
 import { useRegistrarVisita } from "@/lib/use-registrar-visita";
+import type { Reserva } from "@/types";
 
 const reservaSchema = z.object({
   nombreCliente: z.string().min(1, "Requerido").max(150),
@@ -116,6 +118,11 @@ function ReservarModal({
   const role = useSessionStore((s) => s.role);
   const queryClient = useQueryClient();
 
+  // Una vez creada la reserva, el modal cambia a un segundo paso
+  // ofreciendo pagar de inmediato con tarjeta (Webpay). Guardamos la
+  // reserva completa (no solo el id) para poder mostrar el monto.
+  const [reservaCreada, setReservaCreada] = useState<Reserva | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -132,7 +139,7 @@ function ReservarModal({
 
   const reservar = useMutation({
     mutationFn: (values: ReservaValues) =>
-      apiFetch("/reservas", {
+      apiFetch<Reserva>("/reservas", {
         method: "POST",
         body: JSON.stringify({
           ...values,
@@ -141,22 +148,31 @@ function ReservarModal({
           paqueteId,
         }),
       }),
-    onSuccess: () => {
-      toast.success("¡Reserva enviada! Queda pendiente de confirmación.");
+    onSuccess: (reserva) => {
+      toast.success("¡Reserva creada! Puedes pagarla ahora o dejarla pendiente.");
       if (role === "cliente") {
         queryClient.invalidateQueries({ queryKey: ["mis-reservas"] });
       }
-      onClose();
+      setReservaCreada(reserva);
     },
     onError: (err) => {
       toast.error(err instanceof ApiError ? err.message : "No se pudo crear la reserva");
     },
   });
 
+  if (reservaCreada) {
+    return (
+      <ModalShell title={`Reservar: ${paqueteNombre}`} onClose={onClose}>
+        <PagarReservaPaso reserva={reservaCreada} onClose={onClose} />
+      </ModalShell>
+    );
+  }
+
   return (
     <ModalShell title={`Reservar: ${paqueteNombre}`} onClose={onClose}>
       <p className="text-sm text-ink-600 mb-4">
-        Tu reserva quedará pendiente de confirmación por nuestro equipo.
+        Tu reserva queda pendiente de confirmación. Puedes pagarla con tarjeta al
+        tiro o esperar a que nuestro equipo te contacte.
       </p>
       <form onSubmit={handleSubmit((v) => reservar.mutate(v))} className="flex flex-col gap-3">
         <Input
@@ -183,6 +199,66 @@ function ReservarModal({
         </Button>
       </form>
     </ModalShell>
+  );
+}
+
+/**
+ * Segundo paso del modal de reserva: la reserva ya existe (PENDIENTE) y
+ * se ofrece pagarla al tiro con Webpay. Es su propio componente porque
+ * también se reutiliza, con la misma forma, desde el dashboard del
+ * cliente (ver "Mis viajes").
+ */
+export function PagarReservaPaso({
+  reserva,
+  onClose,
+}: {
+  reserva: Reserva;
+  onClose: () => void;
+}) {
+  const [pagando, setPagando] = useState(false);
+
+  async function pagarAhora() {
+    setPagando(true);
+    try {
+      await iniciarPagoWebpay(reserva.id);
+      // Si iniciarPagoWebpay() no lanzó error, el navegador ya está
+      // navegando hacia Webpay — no hay nada más que hacer acá.
+    } catch (err) {
+      setPagando(false);
+      toast.error(
+        err instanceof ApiError ? err.message : "No se pudo iniciar el pago con tarjeta",
+      );
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start gap-3 rounded-xl bg-success/10 p-3">
+        <CheckCircle2 className="size-5 text-success shrink-0 mt-0.5" />
+        <p className="text-sm text-ink-700">
+          Reserva #{reserva.id} creada, pendiente de confirmación.
+          {reserva.montoTotal != null && (
+            <>
+              {" "}
+              Total: <span className="font-semibold">
+                ${Math.round(reserva.montoTotal).toLocaleString("es-CL")}
+              </span>
+            </>
+          )}
+        </p>
+      </div>
+      <p className="text-sm text-ink-600">
+        Puedes pagar ahora con tarjeta (débito o crédito) vía Webpay, o dejarla
+        pendiente y coordinar el pago con nuestro equipo.
+      </p>
+      <Button onClick={pagarAhora} disabled={pagando} className="mt-1">
+        <CreditCard className="size-4" />
+        {pagando ? "Redirigiendo a Webpay..." : "Pagar con tarjeta"}
+      </Button>
+      <Button variant="secondary" onClick={onClose}>
+        Pagar más tarde
+      </Button>
+    </div>
   );
 }
 

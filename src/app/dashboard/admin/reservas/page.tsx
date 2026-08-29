@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarCheck, Pencil, Trash2, X, UserCheck, UserRound } from "lucide-react";
+import { CalendarCheck, Pencil, Trash2, X, UserCheck, UserRound, CreditCard } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api-client";
+import { iniciarPagoWebpay } from "@/lib/webpay";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ export default function AdminReservasPage() {
   const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState<Reserva | null>(null);
   const [eliminando, setEliminando] = useState<Reserva | null>(null);
+  const [pagandoId, setPagandoId] = useState<number | null>(null);
 
   const { data: reservas, isLoading } = useQuery({
     queryKey: ["admin-reservas"],
@@ -105,6 +107,23 @@ export default function AdminReservasPage() {
       toast.error(err instanceof ApiError ? err.message : "No se pudo eliminar la reserva");
     },
   });
+
+  // Igual que el flujo de checkout público: manda a la página de Webpay
+  // donde se ingresan los datos de la tarjeta. Útil cuando el cliente
+  // dicta su tarjeta por teléfono/WhatsApp y el admin cobra por él, o
+  // simplemente para no tener que perseguir al cliente para que entre
+  // él mismo a pagar su reserva pendiente.
+  async function pagarConTarjeta(id: number) {
+    setPagandoId(id);
+    try {
+      await iniciarPagoWebpay(id);
+    } catch (err) {
+      setPagandoId(null);
+      toast.error(
+        err instanceof ApiError ? err.message : "No se pudo iniciar el pago con tarjeta",
+      );
+    }
+  }
 
   const reservasFiltradas = useMemo(() => {
     if (!reservas) return [];
@@ -322,6 +341,26 @@ export default function AdminReservasPage() {
               >
                 {r.estado}
               </span>
+              {r.metodoPago === "WEBPAY" && (
+                <span
+                  className="text-xs px-2 py-1 rounded-full shrink-0 bg-success/15 text-success"
+                  title={r.pagadoEn ? new Date(r.pagadoEn).toLocaleString("es-CL") : undefined}
+                >
+                  Pagado c/tarjeta
+                </span>
+              )}
+              {r.estado !== "CANCELADA" && r.metodoPago !== "WEBPAY" && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={pagandoId === r.id}
+                  onClick={() => pagarConTarjeta(r.id)}
+                  title="Abre Webpay para cobrar esta reserva con tarjeta"
+                >
+                  <CreditCard className="size-4" />
+                  {pagandoId === r.id ? "Redirigiendo..." : "Pagar con tarjeta"}
+                </Button>
+              )}
               <Button size="sm" variant="ghost" onClick={() => abrirEdicion(r)} aria-label="Editar">
                 <Pencil className="size-4" />
               </Button>
