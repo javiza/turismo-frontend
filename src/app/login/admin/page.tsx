@@ -88,7 +88,7 @@ function LoginAdminForm() {
     </div>
   );
 }
-
+//acciones:
 // Mismo motivo que en /login: useSearchParams() necesita un Suspense
 // boundary para que "next build" pueda pre-renderizar la página.
 export default function LoginAdminPage() {
