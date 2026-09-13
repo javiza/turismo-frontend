@@ -22,6 +22,7 @@ import {
   Newspaper,
   GalleryHorizontal,
   PencilRuler,
+  Settings,
 } from "lucide-react";
 import { useConsultasNoLeidas } from "@/hooks/use-consultas-no-leidas";
 import { useProveedoresNoLeidos } from "@/hooks/use-proveedores-no-leidos";
@@ -193,6 +194,13 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           >
             <Users className="size-4" />
             Usuarios
+          </Link>
+          <Link
+            href="/dashboard/admin/configuracion"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sun-100 text-ink-800 font-medium"
+          >
+            <Settings className="size-4" />
+            Configuración
           </Link>
           <Link
             href="/dashboard/admin/cuenta"
