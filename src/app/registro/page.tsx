@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,8 +22,9 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function RegistroPage() {
+function RegistroForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const setSession = useSessionStore((s) => s.setSession);
   const [loading, setLoading] = useState(false);
   const [telefonosAdicionales, setTelefonosAdicionales] = useState<string[]>([]);
@@ -61,10 +62,11 @@ export default function RegistroPage() {
         const me = await fetch("/api/auth/me").then((r) => r.json());
         setSession(me.role, me.profile);
         toast.success("¡Cuenta creada! Bienvenido.");
-        router.push("/dashboard/cliente");
+        router.push(params.get("next") ?? "/dashboard/cliente");
       } else {
         toast.success("Cuenta creada, ahora inicia sesión.");
-        router.push("/login");
+        const next = params.get("next");
+        router.push(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
       }
     } finally {
       setLoading(false);
@@ -127,11 +129,28 @@ export default function RegistroPage() {
 
         <p className="mt-6 text-sm text-ink-600 text-center">
           ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="text-clay-600 font-medium hover:underline">
+          <Link
+            href={
+              params.get("next")
+                ? `/login?next=${encodeURIComponent(params.get("next")!)}`
+                : "/login"
+            }
+            className="text-clay-600 font-medium hover:underline"
+          >
             Ingresa
           </Link>
         </p>
       </Card>
     </div>
+  );
+}
+
+// useSearchParams() exige un boundary de Suspense en App Router para
+// poder pre-renderizar la página en el build (mismo motivo que /login).
+export default function RegistroPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegistroForm />
+    </Suspense>
   );
 }

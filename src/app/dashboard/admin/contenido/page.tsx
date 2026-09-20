@@ -94,10 +94,10 @@ export default function AdminContenidoPage() {
         <div className="h-64 rounded-card bg-sun-100/60 animate-pulse" />
       ) : (
         <div className="flex flex-col gap-6">
+          <SeccionFavicon contenido={contenido} />
           <SeccionPortada contenido={contenido} />
           <SeccionColores contenido={contenido} />
           <SeccionTipografia contenido={contenido} />
-          <SeccionFavicon contenido={contenido} />
           <SeccionQuienesSomos contenido={contenido} />
           <SeccionContacto contenido={contenido} />
           <SeccionResenas contenido={contenido} />

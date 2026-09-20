@@ -96,7 +96,14 @@ function LoginClienteForm() {
 
         <p className="mt-6 text-sm text-ink-600 text-center">
           ¿No tienes cuenta?{" "}
-          <Link href="/registro" className="text-clay-600 font-medium hover:underline">
+          <Link
+            href={
+              params.get("next")
+                ? `/registro?next=${encodeURIComponent(params.get("next")!)}`
+                : "/registro"
+            }
+            className="text-clay-600 font-medium hover:underline"
+          >
             Regístrate
           </Link>
         </p>

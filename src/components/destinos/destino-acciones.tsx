@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSessionStore } from "@/store/session-store";
 import { useRegistrarVisita } from "@/lib/use-registrar-visita";
-import { PagarReservaPaso } from "@/components/paquetes/paquete-acciones";
+import { PagarReservaPaso, IniciaSesionParaReservar } from "@/components/paquetes/paquete-acciones";
 import type { Paquete, Reserva } from "@/types";
 
 const consultaSchema = z.object({
@@ -120,6 +120,7 @@ function ReservarDestinoModal({
 }) {
   const clienteProfile = useSessionStore((s) => s.clienteProfile);
   const role = useSessionStore((s) => s.role);
+  const loaded = useSessionStore((s) => s.loaded);
   const queryClient = useQueryClient();
 
   // Igual que en PaqueteAcciones: una vez creada la reserva, el modal
@@ -128,10 +129,13 @@ function ReservarDestinoModal({
 
   // Trae todos los paquetes públicos y filtra por destino en el cliente:
   // no hay (ni hace falta) un endpoint propio de "paquetes por destino".
+  // Solo hace falta una vez que sabemos que hay sesión de cliente (si no,
+  // se muestra el gate de login y esta consulta no se necesita todavía).
   const { data: paquetes, isLoading } = useQuery({
     queryKey: ["paquetes-por-destino", destinoId],
     queryFn: () => apiFetch<Paquete[]>("/paquetes"),
     select: (data) => data.filter((p) => p.destinoId === destinoId),
+    enabled: role === "cliente",
   });
 
   const {
@@ -160,9 +164,7 @@ function ReservarDestinoModal({
       }),
     onSuccess: (reserva) => {
       toast.success("¡Reserva creada! Puedes pagarla ahora o dejarla pendiente.");
-      if (role === "cliente") {
-        queryClient.invalidateQueries({ queryKey: ["mis-reservas"] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["mis-reservas"] });
       setReservaCreada(reserva);
     },
     onError: (err) => {
@@ -174,6 +176,23 @@ function ReservarDestinoModal({
     return (
       <ModalShell title={`Reservar en: ${destinoNombre}`} onClose={onClose}>
         <PagarReservaPaso reserva={reservaCreada} onClose={onClose} />
+      </ModalShell>
+    );
+  }
+
+  // Igual que en PaqueteAcciones: reservar exige cuenta de cliente.
+  if (!loaded) {
+    return (
+      <ModalShell title={`Reservar en: ${destinoNombre}`} onClose={onClose}>
+        <div className="h-40 rounded-card bg-sun-100/60 animate-pulse" />
+      </ModalShell>
+    );
+  }
+
+  if (role !== "cliente") {
+    return (
+      <ModalShell title={`Reservar en: ${destinoNombre}`} onClose={onClose}>
+        <IniciaSesionParaReservar onClose={onClose} />
       </ModalShell>
     );
   }

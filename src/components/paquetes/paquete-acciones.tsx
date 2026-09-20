@@ -5,8 +5,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { X, CalendarCheck, MessageCircleQuestion, CreditCard, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  CalendarCheck,
+  MessageCircleQuestion,
+  CreditCard,
+  CheckCircle2,
+  LogIn,
+  UserPlus,
+} from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { iniciarPagoWebpay } from "@/lib/webpay";
 import { Button } from "@/components/ui/button";
@@ -116,6 +125,7 @@ function ReservarModal({
 }) {
   const clienteProfile = useSessionStore((s) => s.clienteProfile);
   const role = useSessionStore((s) => s.role);
+  const loaded = useSessionStore((s) => s.loaded);
   const queryClient = useQueryClient();
 
   // Una vez creada la reserva, el modal cambia a un segundo paso
@@ -150,9 +160,7 @@ function ReservarModal({
       }),
     onSuccess: (reserva) => {
       toast.success("¡Reserva creada! Puedes pagarla ahora o dejarla pendiente.");
-      if (role === "cliente") {
-        queryClient.invalidateQueries({ queryKey: ["mis-reservas"] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["mis-reservas"] });
       setReservaCreada(reserva);
     },
     onError: (err) => {
@@ -164,6 +172,26 @@ function ReservarModal({
     return (
       <ModalShell title={`Reservar: ${paqueteNombre}`} onClose={onClose}>
         <PagarReservaPaso reserva={reservaCreada} onClose={onClose} />
+      </ModalShell>
+    );
+  }
+
+  // Reservar exige cuenta de cliente (el backend rechaza con 401 si no
+  // hay sesión): si todavía no sabemos el rol (primer render, ver
+  // useLoadSession) no mostramos nada para evitar el parpadeo entre el
+  // login-gate y el formulario.
+  if (!loaded) {
+    return (
+      <ModalShell title={`Reservar: ${paqueteNombre}`} onClose={onClose}>
+        <div className="h-40 rounded-card bg-sun-100/60 animate-pulse" />
+      </ModalShell>
+    );
+  }
+
+  if (role !== "cliente") {
+    return (
+      <ModalShell title={`Reservar: ${paqueteNombre}`} onClose={onClose}>
+        <IniciaSesionParaReservar onClose={onClose} />
       </ModalShell>
     );
   }
@@ -199,6 +227,38 @@ function ReservarModal({
         </Button>
       </form>
     </ModalShell>
+  );
+}
+
+/**
+ * Gate de login para el modal de reserva: solo clientes con sesión
+ * iniciada pueden reservar (el backend también lo exige, esto solo
+ * evita que un visitante llene el formulario para toparse recién al
+ * enviar con un 401). Se exporta porque también lo usa DestinoAcciones.
+ */
+export function IniciaSesionParaReservar({ onClose }: { onClose: () => void }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const next = encodeURIComponent(pathname ?? "/");
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-ink-600">
+        Para reservar necesitas iniciar sesión con tu cuenta de cliente. Si todavía no
+        tienes una, crearla toma un minuto y podrás ver el estado de tus reservas después.
+      </p>
+      <Button onClick={() => router.push(`/login?next=${next}`)}>
+        <LogIn className="size-4" />
+        Iniciar sesión
+      </Button>
+      <Button variant="secondary" onClick={() => router.push(`/registro?next=${next}`)}>
+        <UserPlus className="size-4" />
+        Crear cuenta
+      </Button>
+      <Button variant="ghost" onClick={onClose}>
+        Cancelar
+      </Button>
+    </div>
   );
 }
 
