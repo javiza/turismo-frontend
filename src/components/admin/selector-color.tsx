@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Palette, X } from "lucide-react";
+import { esColorOscuro as esOscuro } from "@/lib/color";
 
 /** Favoritos: tonos ya usados en el diseño del sitio + algunos extras
  * neutros/oscuros para navbars con mayor contraste. Se muestran siempre,
@@ -13,6 +14,18 @@ export const PALETA_SUGERIDA = [
   { nombre: "Azul pastel", valor: "#dbe4f5" },
   { nombre: "Crema cálido", valor: "#fdf6ec" },
   { nombre: "Arena", valor: "#f5f1e8" },
+  { nombre: "Azul marino", valor: "#142c4c" },
+  { nombre: "Tinta", valor: "#1b2230" },
+];
+
+/** Favoritos para el fondo de las tarjetas: el blanco es el valor por defecto. */
+export const PALETA_TARJETAS = [
+  { nombre: "Blanco (por defecto)", valor: "#ffffff" },
+  { nombre: "Celeste muy suave", valor: "#f5faff" },
+  { nombre: "Celeste suave", valor: "#e8f3ff" },
+  { nombre: "Crema cálido", valor: "#fdf6ec" },
+  { nombre: "Arena", valor: "#f5f1e8" },
+  { nombre: "Gris claro", valor: "#f3f4f6" },
   { nombre: "Azul marino", valor: "#142c4c" },
   { nombre: "Tinta", valor: "#1b2230" },
 ];
@@ -66,17 +79,6 @@ const FAMILIAS_COLOR: { nombre: string; tonos: string[] }[] = [
   },
 ];
 
-/** true si el color de fondo es oscuro, para pintar el check en blanco. */
-function esOscuro(hex: string): boolean {
-  const limpio = hex.replace("#", "");
-  const full = limpio.length === 3 ? limpio.split("").map((c) => c + c).join("") : limpio;
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-  // Percepción de luminancia (fórmula estándar).
-  return (r * 299 + g * 587 + b * 114) / 1000 < 140;
-}
-
 function Swatch({
   valor,
   nombre,
@@ -116,12 +118,15 @@ export function SelectorColor({
   value,
   onChange,
   descripcion,
+  paleta = PALETA_SUGERIDA,
 }: {
   label: string;
   /** "" o undefined = sin personalizar (usa el valor por defecto del sitio). */
   value: string;
   onChange: (valor: string) => void;
   descripcion?: string;
+  /** Colores de acceso rápido. Por defecto, los del fondo/navbar/footer. */
+  paleta?: { nombre: string; valor: string }[];
 }) {
   const [abierta, setAbierta] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -161,7 +166,7 @@ export function SelectorColor({
       {descripcion && <p className="text-xs text-ink-400 -mt-1">{descripcion}</p>}
 
       <div className="flex flex-wrap items-center gap-2">
-        {PALETA_SUGERIDA.map((color) => (
+        {paleta.map((color) => (
           <Swatch
             key={color.valor}
             valor={color.valor}

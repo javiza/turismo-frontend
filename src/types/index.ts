@@ -119,6 +119,12 @@ export interface ContenidoHome {
   colorFondo: string | null;
   colorNavbar: string | null;
   colorFooter: string | null;
+  colorTarjetas: string | null;
+  faviconUrl: string | null;
+  fuenteTexto: string;
+  fuenteTextoUrl: string | null;
+  fuenteTitulos: string;
+  fuenteTitulosUrl: string | null;
   titulo: string;
   subtitulo: string;
   presentacion: string;

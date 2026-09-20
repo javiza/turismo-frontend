@@ -138,3 +138,28 @@ export async function subirFuente(archivo: File): Promise<{ url: string }> {
 
   return data as { url: string };
 }
+
+/**
+ * Sube el favicon del sitio (PNG, ICO, SVG o JPG, máx. 1 MB) desde el
+ * computador del admin. Endpoint propio (POST /uploads/favicon): a
+ * diferencia de subirImagen, conserva el formato original (no lo
+ * convierte a webp/avif) y acepta .ico y .svg.
+ */
+export async function subirFavicon(archivo: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+
+  const res = await fetch(`/api/backend/uploads/favicon`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!res.ok) {
+    throw new ApiError(res.status, extractMessage(data, "No se pudo subir el favicon"), data);
+  }
+
+  return data as { url: string };
+}

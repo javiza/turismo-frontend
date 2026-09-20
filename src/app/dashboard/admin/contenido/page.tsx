@@ -6,15 +6,27 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileText, Plus, Trash2, ImageOff, X, UploadCloud, Loader2, Palette } from "lucide-react";
-import { apiFetch, ApiError, subirFuente } from "@/lib/api-client";
+import {
+  FileText,
+  Plus,
+  Trash2,
+  ImageOff,
+  X,
+  UploadCloud,
+  Loader2,
+  Palette,
+  Type,
+  Globe,
+} from "lucide-react";
+import { apiFetch, ApiError, subirFuente, subirFavicon } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BotonSubirArchivo } from "@/components/shared/galeria-imagenes";
-import { SelectorColor } from "@/components/admin/selector-color";
+import { SelectorColor, PALETA_TARJETAS } from "@/components/admin/selector-color";
 import { FUENTES_SLOGAN, resolverFontFamilySlogan } from "@/lib/slogan-fonts";
+import { FUENTES_SITIO, resolverFontFamilySitio, type RolFuente } from "@/lib/fuentes-sitio";
 import type { ContenidoHome } from "@/types";
 
 // Cada sección de este panel se guarda por separado (su propio form +
@@ -60,6 +72,8 @@ export default function AdminContenidoPage() {
         <div className="flex flex-col gap-6">
           <SeccionPortada contenido={contenido} />
           <SeccionColores contenido={contenido} />
+          <SeccionTipografia contenido={contenido} />
+          <SeccionFavicon contenido={contenido} />
           <SeccionQuienesSomos contenido={contenido} />
           <SeccionContacto contenido={contenido} />
           <SeccionResenas contenido={contenido} />
@@ -516,7 +530,7 @@ function SeccionPortada({ contenido }: { contenido?: ContenidoHome }) {
   );
 }
 
-// --- Colores del sitio: fondo general y navbar ---
+// --- Colores del sitio: fondo general, navbar, footer y tarjetas ---
 
 const schemaColores = z.object({
   colorFondo: z
@@ -528,6 +542,9 @@ const schemaColores = z.object({
   colorFooter: z
     .string()
     .regex(/^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$/, "Debe ser un color hexadecimal, ej: #f8fbff"),
+  colorTarjetas: z
+    .string()
+    .regex(/^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$/, "Debe ser un color hexadecimal, ej: #ffffff"),
 });
 
 type FormColores = z.infer<typeof schemaColores>;
@@ -543,7 +560,7 @@ function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
     formState: { errors, isDirty },
   } = useForm<FormColores>({
     resolver: zodResolver(schemaColores),
-    defaultValues: { colorFondo: "", colorNavbar: "", colorFooter: "" },
+    defaultValues: { colorFondo: "", colorNavbar: "", colorFooter: "", colorTarjetas: "" },
   });
 
   useEffect(() => {
@@ -552,6 +569,7 @@ function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
         colorFondo: contenido.colorFondo ?? "",
         colorNavbar: contenido.colorNavbar ?? "",
         colorFooter: contenido.colorFooter ?? "",
+        colorTarjetas: contenido.colorTarjetas ?? "",
       });
     }
   }, [contenido, reset]);
@@ -570,6 +588,7 @@ function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
         colorFondo: data.colorFondo ?? "",
         colorNavbar: data.colorNavbar ?? "",
         colorFooter: data.colorFooter ?? "",
+        colorTarjetas: data.colorTarjetas ?? "",
       });
     },
     onError: (err) => {
@@ -584,11 +603,11 @@ function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
         <h2 className="font-display text-lg font-semibold text-ink-900">Colores del sitio</h2>
       </div>
       <p className="text-sm text-ink-600 mb-4">
-        Elige el color de fondo general, el del navbar y el del footer del sitio público. Si no
-        eliges ninguno, se usan los tonos por defecto.
+        Elige el color de fondo general, el del navbar, el del footer y el de los rectángulos
+        (tarjetas) del sitio. Si no eliges ninguno, se usan los tonos por defecto.
       </p>
       <form onSubmit={handleSubmit((v) => guardar.mutate(v))} className="flex flex-col gap-6">
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-6">
           <SelectorColor
             label="Color de fondo"
             descripcion="Fondo general de las páginas públicas."
@@ -607,10 +626,20 @@ function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
             value={watch("colorFooter")}
             onChange={(v) => setValue("colorFooter", v, { shouldDirty: true })}
           />
+          <SelectorColor
+            label="Color de los rectángulos"
+            descripcion="Fondo de las tarjetas y cuadros de contenido (destinos, paquetes, paneles...). Por defecto, blanco."
+            paleta={PALETA_TARJETAS}
+            value={watch("colorTarjetas")}
+            onChange={(v) => setValue("colorTarjetas", v, { shouldDirty: true })}
+          />
         </div>
-        {(errors.colorFondo || errors.colorNavbar || errors.colorFooter) && (
+        {(errors.colorFondo || errors.colorNavbar || errors.colorFooter || errors.colorTarjetas) && (
           <p className="text-xs text-danger">
-            {errors.colorFondo?.message || errors.colorNavbar?.message || errors.colorFooter?.message}
+            {errors.colorFondo?.message ||
+              errors.colorNavbar?.message ||
+              errors.colorFooter?.message ||
+              errors.colorTarjetas?.message}
           </p>
         )}
         <div>
@@ -620,6 +649,392 @@ function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
           </Button>
         </div>
       </form>
+    </Card>
+  );
+}
+
+// --- Tipografía general del sitio: texto y títulos ---
+
+const schemaTipografia = z.object({
+  fuenteTexto: z.string().min(1),
+  fuenteTextoUrl: z.string().max(1000),
+  fuenteTitulos: z.string().min(1),
+  fuenteTitulosUrl: z.string().max(1000),
+});
+
+type FormTipografia = z.infer<typeof schemaTipografia>;
+
+/**
+ * Selector de una tipografía (preseleccionada o propia subida). Se usa
+ * dos veces: texto general y títulos. Igual que con el slogan, si hay una
+ * tipografía propia subida, esa tiene prioridad sobre la preseleccionada
+ * hasta que se quite.
+ */
+function SelectorTipografia({
+  rol,
+  label,
+  descripcion,
+  fuenteKey,
+  fuenteUrl,
+  onElegirPreset,
+  onCambiarUrl,
+  textoEjemplo,
+}: {
+  rol: RolFuente;
+  label: string;
+  descripcion: string;
+  fuenteKey: string;
+  fuenteUrl: string;
+  onElegirPreset: (key: string) => void;
+  onCambiarUrl: (url: string) => void;
+  textoEjemplo: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [subiendo, setSubiendo] = useState(false);
+
+  // Mismo criterio que la portada: el @font-face global (layout.tsx) solo
+  // refleja lo ya guardado, así que la vista previa arma el suyo, con otro
+  // nombre de familia, apuntando a lo que haya en el form ahora mismo.
+  const nombrePreview = rol === "texto" ? "TextoPreviewCustom" : "TitulosPreviewCustom";
+  const previewFontFamily = fuenteUrl
+    ? `"${nombrePreview}", ${rol === "texto" ? "sans-serif" : "serif"}`
+    : resolverFontFamilySitio(rol, fuenteKey, null);
+
+  async function handleSubir(file: File | undefined) {
+    if (!file) return;
+    const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+    if (![".ttf", ".otf", ".woff", ".woff2"].includes(extension)) {
+      toast.error("Usa un archivo TTF, OTF, WOFF o WOFF2");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("El archivo supera el máximo de 2 MB");
+      return;
+    }
+
+    setSubiendo(true);
+    try {
+      const { url } = await subirFuente(file);
+      onCambiarUrl(url);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo subir la tipografía");
+    } finally {
+      setSubiendo(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-card border border-ink-100 p-4">
+      <span className="text-sm font-medium text-ink-800">{label}</span>
+      <p className="text-xs text-ink-400 -mt-1">{descripcion}</p>
+
+      <div className="flex flex-wrap gap-2">
+        {FUENTES_SITIO.map((fuente) => (
+          <button
+            key={fuente.key}
+            type="button"
+            onClick={() => {
+              onElegirPreset(fuente.key);
+              // Elegir un preset vuelve a él: si había una tipografía
+              // propia subida, deja de usarse.
+              onCambiarUrl("");
+            }}
+            className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
+              fuenteKey === fuente.key && !fuenteUrl
+                ? "border-clay-500 bg-clay-50 text-clay-700"
+                : "border-sun-200 bg-white text-ink-700 hover:border-sun-300"
+            }`}
+            style={{ fontFamily: `var(${fuente.cssVar})` }}
+          >
+            {fuente.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 pt-1">
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2"
+          className="hidden"
+          onChange={(e) => handleSubir(e.target.files?.[0])}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={subiendo}
+          onClick={() => inputRef.current?.click()}
+        >
+          {subiendo ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
+          {subiendo
+            ? "Subiendo..."
+            : fuenteUrl
+              ? "Cambiar tipografía propia"
+              : "Subir tipografía propia"}
+        </Button>
+        {fuenteUrl && (
+          <Button type="button" variant="ghost" size="sm" onClick={() => onCambiarUrl("")}>
+            <X className="size-4" />
+            Quitar tipografía propia
+          </Button>
+        )}
+      </div>
+
+      {fuenteUrl && (
+        <style>{`
+          @font-face {
+            font-family: "${nombrePreview}";
+            src: url("${fuenteUrl}");
+            font-display: swap;
+          }
+        `}</style>
+      )}
+      <div className="rounded-lg bg-sun-50/60 border border-sun-100 px-4 py-3">
+        <p
+          className={rol === "titulos" ? "text-2xl font-semibold text-ink-900" : "text-sm text-ink-800"}
+          style={{ fontFamily: previewFontFamily }}
+        >
+          {textoEjemplo}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SeccionTipografia({ contenido }: { contenido?: ContenidoHome }) {
+  const queryClient = useQueryClient();
+
+  const {
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { isDirty },
+  } = useForm<FormTipografia>({
+    resolver: zodResolver(schemaTipografia),
+    defaultValues: {
+      fuenteTexto: "inter",
+      fuenteTextoUrl: "",
+      fuenteTitulos: "fraunces",
+      fuenteTitulosUrl: "",
+    },
+  });
+
+  function valoresDesde(c: ContenidoHome): FormTipografia {
+    return {
+      fuenteTexto: c.fuenteTexto || "inter",
+      fuenteTextoUrl: c.fuenteTextoUrl ?? "",
+      fuenteTitulos: c.fuenteTitulos || "fraunces",
+      fuenteTitulosUrl: c.fuenteTitulosUrl ?? "",
+    };
+  }
+
+  useEffect(() => {
+    if (contenido) reset(valoresDesde(contenido));
+  }, [contenido, reset]);
+
+  const guardar = useMutation({
+    mutationFn: (values: FormTipografia) =>
+      apiFetch<ContenidoHome>("/contenido-home", {
+        method: "PATCH",
+        body: JSON.stringify(values),
+      }),
+    onSuccess: (data) => {
+      toast.success("Tipografía actualizada");
+      revalidarContenidoPublico();
+      queryClient.setQueryData(QUERY_KEY, data);
+      reset(valoresDesde(data));
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo guardar la tipografía");
+    },
+  });
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-2 mb-1">
+        <Type className="size-5 text-clay-600" />
+        <h2 className="font-display text-lg font-semibold text-ink-900">Tipografía del sitio</h2>
+      </div>
+      <p className="text-sm text-ink-600 mb-4">
+        Cambia la letra de todo el sitio: una para los textos y otra para los títulos. Elige una
+        de la lista o sube la tuya. (El slogan de la agencia se configura aparte, en Portada.)
+      </p>
+      <form onSubmit={handleSubmit((v) => guardar.mutate(v))} className="flex flex-col gap-5">
+        <SelectorTipografia
+          rol="texto"
+          label="Tipografía de los textos"
+          descripcion="Párrafos, botones, menús, formularios y el resto del contenido."
+          fuenteKey={watch("fuenteTexto")}
+          fuenteUrl={watch("fuenteTextoUrl")}
+          onElegirPreset={(k) => setValue("fuenteTexto", k, { shouldDirty: true })}
+          onCambiarUrl={(u) => setValue("fuenteTextoUrl", u, { shouldDirty: true })}
+          textoEjemplo="Arma tu próximo viaje con destinos, paquetes y ofertas curadas por nuestro equipo."
+        />
+        <SelectorTipografia
+          rol="titulos"
+          label="Tipografía de los títulos"
+          descripcion="Encabezados de las páginas y de cada sección."
+          fuenteKey={watch("fuenteTitulos")}
+          fuenteUrl={watch("fuenteTitulosUrl")}
+          onElegirPreset={(k) => setValue("fuenteTitulos", k, { shouldDirty: true })}
+          onCambiarUrl={(u) => setValue("fuenteTitulosUrl", u, { shouldDirty: true })}
+          textoEjemplo="Programa tus vacaciones con nosotros"
+        />
+        <p className="text-xs text-ink-400">
+          Tipografía propia: TTF, OTF, WOFF o WOFF2, máx. 2 MB. Si subes una, esa se usa hasta
+          que la quites. Asegúrate de tener licencia para usarla en tu sitio web.
+        </p>
+        <div>
+          <Button type="submit" disabled={guardar.isPending || !isDirty}>
+            <Type className="size-4" />
+            {guardar.isPending ? "Guardando..." : "Guardar tipografía"}
+          </Button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
+// --- Favicon: ícono de la pestaña del navegador ---
+
+const EXTENSIONES_FAVICON = [".png", ".ico", ".svg", ".jpg", ".jpeg"];
+
+function SeccionFavicon({ contenido }: { contenido?: ContenidoHome }) {
+  const queryClient = useQueryClient();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [subiendo, setSubiendo] = useState(false);
+  const guardado = contenido?.faviconUrl ?? "";
+  // "" = sin favicon. Se edita localmente y recién se aplica al sitio al
+  // presionar "Guardar favicon", como el resto de las secciones.
+  const [faviconUrl, setFaviconUrl] = useState(guardado);
+
+  useEffect(() => {
+    setFaviconUrl(guardado);
+  }, [guardado]);
+
+  const guardar = useMutation({
+    mutationFn: (url: string) =>
+      apiFetch<ContenidoHome>("/contenido-home", {
+        method: "PATCH",
+        body: JSON.stringify({ faviconUrl: url }),
+      }),
+    onSuccess: (data) => {
+      toast.success("Favicon actualizado");
+      revalidarContenidoPublico();
+      queryClient.setQueryData(QUERY_KEY, data);
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo guardar el favicon");
+    },
+  });
+
+  async function handleSubir(file: File | undefined) {
+    if (!file) return;
+    const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+    if (!EXTENSIONES_FAVICON.includes(extension)) {
+      toast.error("Usa un archivo PNG, ICO, SVG o JPG");
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      toast.error("El favicon supera el máximo de 1 MB");
+      return;
+    }
+
+    setSubiendo(true);
+    try {
+      const { url } = await subirFavicon(file);
+      setFaviconUrl(url);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo subir el favicon");
+    } finally {
+      setSubiendo(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  const cambiado = faviconUrl !== guardado;
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-2 mb-1">
+        <Globe className="size-5 text-clay-600" />
+        <h2 className="font-display text-lg font-semibold text-ink-900">Favicon</h2>
+      </div>
+      <p className="text-sm text-ink-600 mb-4">
+        Es el ícono pequeño que aparece en la pestaña del navegador y en los marcadores. Súbelo
+        desde tu computador.
+      </p>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Vista previa: cómo se ve en una pestaña + tamaño ampliado */}
+          <div className="flex items-center gap-2 rounded-t-lg border border-ink-100 bg-sun-50/60 px-3 py-2 min-w-48 max-w-64">
+            {faviconUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={faviconUrl} alt="" className="size-4 object-contain shrink-0" />
+            ) : (
+              <Globe className="size-4 text-ink-400 shrink-0" />
+            )}
+            <span className="text-xs text-ink-800 truncate">
+              {contenido?.nombreAgencia || "Tu Agencia de Viajes"}
+            </span>
+          </div>
+          <div className="size-16 rounded-card border border-dashed border-sun-300 bg-sun-50/50 flex items-center justify-center overflow-hidden shrink-0">
+            {faviconUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={faviconUrl} alt="Favicon actual" className="size-12 object-contain" />
+            ) : (
+              <ImageOff className="size-6 text-ink-400" />
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".png,.ico,.svg,.jpg,.jpeg,image/png,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,image/jpeg"
+            className="hidden"
+            onChange={(e) => handleSubir(e.target.files?.[0])}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={subiendo}
+            onClick={() => inputRef.current?.click()}
+          >
+            {subiendo ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
+            {subiendo ? "Subiendo..." : faviconUrl ? "Cambiar favicon" : "Subir favicon"}
+          </Button>
+          {faviconUrl && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setFaviconUrl("")}>
+              <X className="size-4" />
+              Quitar favicon
+            </Button>
+          )}
+        </div>
+
+        <p className="text-xs text-ink-400">
+          Formatos: PNG, ICO, SVG o JPG, máx. 1 MB. Lo ideal es una imagen cuadrada (por ejemplo
+          64×64 o 512×512 px). Los navegadores guardan el favicon en caché: tras guardarlo, puede
+          tardar unos minutos en cambiar, o recarga la página con Ctrl+F5.
+        </p>
+
+        <div>
+          <Button
+            type="button"
+            disabled={guardar.isPending || !cambiado}
+            onClick={() => guardar.mutate(faviconUrl)}
+          >
+            <Globe className="size-4" />
+            {guardar.isPending ? "Guardando..." : "Guardar favicon"}
+          </Button>
+        </div>
+      </div>
     </Card>
   );
 }

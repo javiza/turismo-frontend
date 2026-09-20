@@ -201,7 +201,7 @@ export default async function HomePage() {
           <Carrusel>
             {ofertas.map((o) => (
               <CarruselItem key={o.id}>
-                <Card className="overflow-hidden flex flex-col gap-4 bg-white border-l-4 border-l-clay-400 h-full p-0">
+                <Card className="overflow-hidden flex flex-col gap-4 border-l-4 border-l-clay-400 h-full p-0">
                   {(o.imagenPrincipal || (o.imagenes && o.imagenes.length > 0)) && (
                     <GaleriaLightbox imagenes={o.imagenes} imagenPrincipal={o.imagenPrincipal} nombre={o.titulo}>
                       <div className="relative h-36 bg-sun-100">

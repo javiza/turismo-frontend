@@ -69,9 +69,16 @@
   --color-fondo-app: var(--color-cream);
   --color-navbar-app: var(--color-cream);
   --color-footer-app: var(--color-navbar-app);
+  /* Fondo de los rectángulos/tarjetas (<Card>). Blanco por defecto; el
+     admin lo cambia desde Contenido → Colores del sitio. */
+  --color-tarjeta-app: #ffffff;
 
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Tipografía general del sitio. Los valores por defecto usan las
+     fuentes cargadas en layout.tsx (next/font, variables --font-inter y
+     --font-fraunces). Si el admin elige otras (Contenido → Tipografía
+     del sitio), layout.tsx inyecta un override de estas dos variables. */
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   /* Nota: las tipografías del slogan (Caveat y alternativas) ya no se
      declaran acá. Se cargan dinámicamente en layout.tsx (next/font/google,
      una CSS var --font-hand-<key> por cada una) porque el admin puede
