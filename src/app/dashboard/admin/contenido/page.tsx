@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRefrescarSitio } from "@/hooks/use-refrescar-sitio";
 import {
   FileText,
   Plus,
@@ -17,6 +18,7 @@ import {
   Palette,
   Type,
   Globe,
+  RefreshCw,
 } from "lucide-react";
 import { apiFetch, ApiError, subirFuente, subirFavicon } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
@@ -39,31 +41,53 @@ import type { ContenidoHome } from "@/types";
 const QUERY_KEY = ["admin-contenido-home"];
 
 // El navbar/footer/home públicos cachean contenido-home por 60s (ISR).
-// Llamamos a este endpoint apenas se guarda cualquier sección para que
-// el cambio se vea al instante en vez de esperar esa ventana — ver
-// /api/revalidate/contenido-home/route.ts. Si falla (ej. red lenta) no
-// rompemos el flujo de guardado: en el peor caso el cambio tarda hasta
-// 60s en reflejarse públicamente, como antes.
-function revalidarContenidoPublico() {
-  fetch("/api/revalidate/contenido-home", { method: "POST" }).catch(() => {});
-}
+// Tras cada guardado se usa useRefrescarSitio(): invalida ese caché y
+// refresca la página abierta, para que el cambio se vea al instante en
+// vez de esperar la ventana de 60s ni tener que recargar a mano — ver
+// hooks/use-refrescar-sitio.ts.
 
 export default function AdminContenidoPage() {
+  const queryClient = useQueryClient();
+  const refrescarSitio = useRefrescarSitio();
+  const [actualizando, setActualizando] = useState(false);
+
   const { data: contenido, isLoading } = useQuery({
     queryKey: QUERY_KEY,
     queryFn: () => apiFetch<ContenidoHome>("/contenido-home"),
   });
 
+  // Botón manual: vuelve a leer el contenido desde el servidor y refresca
+  // la página (navbar, colores, tipografía, favicon), por si el admin
+  // quiere ver el estado real del sitio sin recargar el navegador.
+  async function actualizar() {
+    setActualizando(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+        refrescarSitio(),
+      ]);
+      toast.success("Página actualizada");
+    } finally {
+      setActualizando(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-ink-900">
-          Contenido de la home
-        </h1>
-        <p className="text-sm text-ink-600">
-          Este texto y las reseñas aparecen en la página de inicio pública. Cada sección se
-          guarda de forma independiente.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-ink-900">
+            Contenido de la home
+          </h1>
+          <p className="text-sm text-ink-600">
+            Este texto y las reseñas aparecen en la página de inicio pública. Cada sección se
+            guarda de forma independiente y el cambio se aplica al instante.
+          </p>
+        </div>
+        <Button type="button" variant="secondary" size="sm" disabled={actualizando} onClick={actualizar}>
+          {actualizando ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+          {actualizando ? "Actualizando..." : "Actualizar"}
+        </Button>
       </div>
 
       {isLoading ? (
@@ -107,6 +131,7 @@ type FormPortada = z.infer<typeof schemaPortada>;
 
 function SeccionPortada({ contenido }: { contenido?: ContenidoHome }) {
   const queryClient = useQueryClient();
+  const refrescarSitio = useRefrescarSitio();
   const inputFuenteRef = useRef<HTMLInputElement>(null);
   const [subiendoFuente, setSubiendoFuente] = useState(false);
 
@@ -160,7 +185,7 @@ function SeccionPortada({ contenido }: { contenido?: ContenidoHome }) {
       }),
     onSuccess: (data) => {
       toast.success("Portada actualizada");
-      revalidarContenidoPublico();
+      void refrescarSitio();
       queryClient.setQueryData(QUERY_KEY, data);
       reset({
         nombreAgencia: data.nombreAgencia,
@@ -551,6 +576,7 @@ type FormColores = z.infer<typeof schemaColores>;
 
 function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
   const queryClient = useQueryClient();
+  const refrescarSitio = useRefrescarSitio();
 
   const {
     handleSubmit,
@@ -582,7 +608,7 @@ function SeccionColores({ contenido }: { contenido?: ContenidoHome }) {
       }),
     onSuccess: (data) => {
       toast.success("Colores actualizados");
-      revalidarContenidoPublico();
+      void refrescarSitio();
       queryClient.setQueryData(QUERY_KEY, data);
       reset({
         colorFondo: data.colorFondo ?? "",
@@ -805,6 +831,7 @@ function SelectorTipografia({
 
 function SeccionTipografia({ contenido }: { contenido?: ContenidoHome }) {
   const queryClient = useQueryClient();
+  const refrescarSitio = useRefrescarSitio();
 
   const {
     handleSubmit,
@@ -843,7 +870,7 @@ function SeccionTipografia({ contenido }: { contenido?: ContenidoHome }) {
       }),
     onSuccess: (data) => {
       toast.success("Tipografía actualizada");
-      revalidarContenidoPublico();
+      void refrescarSitio();
       queryClient.setQueryData(QUERY_KEY, data);
       reset(valoresDesde(data));
     },
@@ -904,6 +931,7 @@ const EXTENSIONES_FAVICON = [".png", ".ico", ".svg", ".jpg", ".jpeg"];
 
 function SeccionFavicon({ contenido }: { contenido?: ContenidoHome }) {
   const queryClient = useQueryClient();
+  const refrescarSitio = useRefrescarSitio();
   const inputRef = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
   const guardado = contenido?.faviconUrl ?? "";
@@ -923,7 +951,7 @@ function SeccionFavicon({ contenido }: { contenido?: ContenidoHome }) {
       }),
     onSuccess: (data) => {
       toast.success("Favicon actualizado");
-      revalidarContenidoPublico();
+      void refrescarSitio();
       queryClient.setQueryData(QUERY_KEY, data);
     },
     onError: (err) => {
@@ -1052,6 +1080,7 @@ type FormQuienesSomos = z.infer<typeof schemaQuienesSomos>;
 
 function SeccionQuienesSomos({ contenido }: { contenido?: ContenidoHome }) {
   const queryClient = useQueryClient();
+  const refrescarSitio = useRefrescarSitio();
 
   const {
     register,
@@ -1082,7 +1111,7 @@ function SeccionQuienesSomos({ contenido }: { contenido?: ContenidoHome }) {
       }),
     onSuccess: (data) => {
       toast.success("Sección actualizada");
-      revalidarContenidoPublico();
+      void refrescarSitio();
       queryClient.setQueryData(QUERY_KEY, data);
       reset({
         presentacion: data.presentacion,
@@ -1148,6 +1177,7 @@ type FormContacto = z.infer<typeof schemaContacto>;
 
 function SeccionContacto({ contenido }: { contenido?: ContenidoHome }) {
   const queryClient = useQueryClient();
+  const refrescarSitio = useRefrescarSitio();
 
   const {
     register,
@@ -1177,7 +1207,7 @@ function SeccionContacto({ contenido }: { contenido?: ContenidoHome }) {
       }),
     onSuccess: (data) => {
       toast.success("Datos de contacto actualizados");
-      revalidarContenidoPublico();
+      void refrescarSitio();
       queryClient.setQueryData(QUERY_KEY, data);
       reset({
         telefono: data.telefono ?? "",
@@ -1244,6 +1274,7 @@ type FormResenas = z.infer<typeof schemaResenas>;
 
 function SeccionResenas({ contenido }: { contenido?: ContenidoHome }) {
   const queryClient = useQueryClient();
+  const refrescarSitio = useRefrescarSitio();
 
   const {
     register,
@@ -1272,7 +1303,7 @@ function SeccionResenas({ contenido }: { contenido?: ContenidoHome }) {
       }),
     onSuccess: (data) => {
       toast.success("Reseñas actualizadas");
-      revalidarContenidoPublico();
+      void refrescarSitio();
       queryClient.setQueryData(QUERY_KEY, data);
       reset({ resenas: data.resenas });
     },
