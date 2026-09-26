@@ -52,52 +52,59 @@ export function Navbar({
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-ink-800">
-          <Link href="/destinos" className="hover:text-clay-600">
-            Destinos
-          </Link>
-          <Link href="/paquetes" className="hover:text-clay-600">
-            Paquetes
-          </Link>
-          <Link href="/ofertas" className="hover:text-clay-600">
-            Ofertas
-          </Link>
-        </div>
+        <div className="hidden md:flex items-center gap-8">
+          {/* Antes "links" y "botones" eran dos hijos directos del nav
+              repartidos por justify-between: el espacio entre "Ofertas" y
+              "Panel admin" dependía de cuánto sobrara de ancho de
+              pantalla y en tablet quedaban pegados. Agrupados acá con
+              gap-8 fijo, siempre queda el mismo espacio entre ambos. */}
+          <div className="flex items-center gap-6 text-sm font-medium text-ink-800">
+            <Link href="/destinos" className="hover:text-clay-600">
+              Destinos
+            </Link>
+            <Link href="/paquetes" className="hover:text-clay-600">
+              Paquetes
+            </Link>
+            <Link href="/ofertas" className="hover:text-clay-600">
+              Ofertas
+            </Link>
+          </div>
 
-        <div className="hidden md:flex items-center gap-3">
-          {role === "admin" && (
-            <Link href="/dashboard/admin">
-              <Button variant="accent" size="sm">
-                <LayoutDashboard className="size-4" /> Panel admin
-              </Button>
-            </Link>
-          )}
-          {role === "cliente" && (
-            <Link href="/dashboard/cliente">
-              <Button variant="secondary" size="sm">
-                <User className="size-4" /> {clienteProfile?.nombre?.split(" ")[0] ?? "Mi cuenta"}
-              </Button>
-            </Link>
-          )}
-          {role ? (
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="size-4" />
-              Salir
-            </Button>
-          ) : (
-            <>
-              <Link href="/login">
-                <Button variant="ghost" size="sm">
-                  Ingresar
+          <div className="flex items-center gap-3">
+            {role === "admin" && (
+              <Link href="/dashboard/admin">
+                <Button variant="accent" size="sm">
+                  <LayoutDashboard className="size-4" /> Panel admin
                 </Button>
               </Link>
-              <Link href="/registro">
-                <Button variant="primary" size="sm">
-                  Crear cuenta
+            )}
+            {role === "cliente" && (
+              <Link href="/dashboard/cliente">
+                <Button variant="secondary" size="sm">
+                  <User className="size-4" /> {clienteProfile?.nombre?.split(" ")[0] ?? "Mi cuenta"}
                 </Button>
               </Link>
-            </>
-          )}
+            )}
+            {role ? (
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="size-4" />
+                Salir
+              </Button>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">
+                    Ingresar
+                  </Button>
+                </Link>
+                <Link href="/registro">
+                  <Button variant="primary" size="sm">
+                    Crear cuenta
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         <button

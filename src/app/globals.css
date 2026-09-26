@@ -140,6 +140,12 @@ body {
 .animate-sun-glow-slow { animation: sun-glow-slow 8s ease-in-out infinite; }
 .animate-cloud-drift { animation: cloud-drift 22s ease-in-out infinite alternate; }
 .animate-cloud-drift-slow { animation: cloud-drift-reverse 30s ease-in-out infinite alternate; }
+
+/* ---- Scrollbar delgada, acorde a la paleta del sitio ---- */
+/* Usada en paneles con scroll propio (ej. sidebar del panel admin, ver
+   dashboard/admin/layout.tsx) para que no se vea la barra gris por
+   defecto del navegador. Firefox usa las dos props `scrollbar-*`;
+   Chrome/Safari/Edge usan los pseudo-elementos ::-webkit-scrollbar-*. */
 .scrollbar-fina {
   scrollbar-width: thin;
   scrollbar-color: var(--color-sun-400) transparent;

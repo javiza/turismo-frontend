@@ -255,7 +255,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       </div>
 
       <div className="grid lg:grid-cols-[220px_1fr] gap-8">
-         <aside className="hidden lg:block lg:sticky lg:top-24 h-max max-h-[calc(100vh-7rem)] overflow-y-auto pr-1 scrollbar-fina">
+        <aside className="hidden lg:block lg:sticky lg:top-24 h-max max-h-[calc(100vh-7rem)] overflow-y-auto pr-1 scrollbar-fina">
           <div className="flex items-center gap-2 mb-6 text-clay-600">
             <Compass className="size-5" />
             <span className="font-display font-semibold">Panel admin</span>
