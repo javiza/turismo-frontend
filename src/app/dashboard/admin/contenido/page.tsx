@@ -959,6 +959,40 @@ function SeccionFavicon({ contenido }: { contenido?: ContenidoHome }) {
     },
   });
 
+  // Título de la pestaña del navegador (el <title> que va al lado del
+  // favicon). Independiente de la frase junto al logo (nombreAgencia, ver
+  // SeccionPortada): antes se usaba el mismo texto para ambos, ahora se
+  // editan por separado. "" guardado = el sitio usa el título por
+  // defecto (nombre de la agencia + " | Agencia de Turismo").
+  const tituloPestanaGuardado = contenido?.tituloPestana ?? "";
+  const [tituloPestana, setTituloPestana] = useState(tituloPestanaGuardado);
+
+  useEffect(() => {
+    setTituloPestana(tituloPestanaGuardado);
+  }, [tituloPestanaGuardado]);
+
+  const guardarTituloPestana = useMutation({
+    mutationFn: (valor: string) =>
+      apiFetch<ContenidoHome>("/contenido-home", {
+        method: "PATCH",
+        body: JSON.stringify({ tituloPestana: valor }),
+      }),
+    onSuccess: (data) => {
+      toast.success("Título de la pestaña actualizado");
+      void refrescarSitio();
+      queryClient.setQueryData(QUERY_KEY, data);
+    },
+    onError: (err) => {
+      toast.error(
+        err instanceof ApiError ? err.message : "No se pudo guardar el título de la pestaña",
+      );
+    },
+  });
+
+  const tituloPestanaCambiado = tituloPestana !== tituloPestanaGuardado;
+  const tituloPestanaPreview =
+    tituloPestana.trim() || `${contenido?.nombreAgencia || "Tu Agencia de Viajes"} | Agencia de Turismo`;
+
   async function handleSubir(file: File | undefined) {
     if (!file) return;
     const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
@@ -1006,9 +1040,7 @@ function SeccionFavicon({ contenido }: { contenido?: ContenidoHome }) {
             ) : (
               <Globe className="size-4 text-ink-400 shrink-0" />
             )}
-            <span className="text-xs text-ink-800 truncate">
-              {contenido?.nombreAgencia || "Tu Agencia de Viajes"}
-            </span>
+            <span className="text-xs text-ink-800 truncate">{tituloPestanaPreview}</span>
           </div>
           <div className="size-16 rounded-card border border-dashed border-sun-300 bg-sun-50/50 flex items-center justify-center overflow-hidden shrink-0">
             {faviconUrl ? (
@@ -1060,6 +1092,37 @@ function SeccionFavicon({ contenido }: { contenido?: ContenidoHome }) {
           >
             <Globe className="size-4" />
             {guardar.isPending ? "Guardando..." : "Guardar favicon"}
+          </Button>
+        </div>
+
+        <hr className="border-sun-100" />
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="tituloPestana" className="text-sm font-medium text-ink-800">
+            Título de la pestaña
+          </label>
+          <p className="text-xs text-ink-500">
+            Es el texto que aparece en la pestaña del navegador, junto al favicon. Es
+            independiente de la frase que va junto al logo (esa se edita en Portada). Déjalo
+            vacío para usar el título por defecto.
+          </p>
+          <Input
+            id="tituloPestana"
+            value={tituloPestana}
+            onChange={(e) => setTituloPestana(e.target.value)}
+            maxLength={150}
+            placeholder={`${contenido?.nombreAgencia || "Tu Agencia de Viajes"} | Agencia de Turismo`}
+          />
+        </div>
+
+        <div>
+          <Button
+            type="button"
+            disabled={guardarTituloPestana.isPending || !tituloPestanaCambiado}
+            onClick={() => guardarTituloPestana.mutate(tituloPestana)}
+          >
+            <Globe className="size-4" />
+            {guardarTituloPestana.isPending ? "Guardando..." : "Guardar título de la pestaña"}
           </Button>
         </div>
       </div>

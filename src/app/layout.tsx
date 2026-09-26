@@ -142,6 +142,7 @@ async function getContenidoBasico(): Promise<{
   colorFooter: string | null;
   colorTarjetas: string | null;
   faviconUrl: string | null;
+  tituloPestana: string | null;
   fuenteTexto: string;
   fuenteTextoUrl: string | null;
   fuenteTitulos: string;
@@ -166,6 +167,7 @@ async function getContenidoBasico(): Promise<{
       colorFooter: null,
       colorTarjetas: null,
       faviconUrl: null,
+      tituloPestana: null,
       fuenteTexto: "inter",
       fuenteTextoUrl: null,
       fuenteTitulos: "fraunces",
@@ -186,6 +188,7 @@ async function getContenidoBasico(): Promise<{
     colorFooter: res.data.colorFooter || null,
     colorTarjetas: res.data.colorTarjetas || null,
     faviconUrl: res.data.faviconUrl || null,
+    tituloPestana: res.data.tituloPestana || null,
     fuenteTexto: res.data.fuenteTexto || "inter",
     fuenteTextoUrl: res.data.fuenteTextoUrl || null,
     fuenteTitulos: res.data.fuenteTitulos || "fraunces",
@@ -217,10 +220,14 @@ function tipoMimeFavicon(url: string): string | undefined {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { nombreAgencia, faviconUrl } = await getContenidoBasico();
+  const { nombreAgencia, faviconUrl, tituloPestana } = await getContenidoBasico();
   const tipo = faviconUrl ? tipoMimeFavicon(faviconUrl) : undefined;
   return {
-    title: `${nombreAgencia} | Agencia de Turismo`,
+    // Título de la pestaña del navegador: independiente de la frase que
+    // acompaña al logo (nombreAgencia, Navbar/Footer). Si el admin no ha
+    // cargado uno propio (Contenido → Favicon), se mantiene el título
+    // por defecto de siempre.
+    title: tituloPestana?.trim() ? tituloPestana : `${nombreAgencia} | Agencia de Turismo`,
     description: "Encuentra tu próximo destino, paquete u oferta de viaje.",
     // Favicon subido por el admin (Contenido → Favicon). Sin favicon no
     // se declara ningún ícono.

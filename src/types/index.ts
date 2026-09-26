@@ -121,6 +121,7 @@ export interface ContenidoHome {
   colorFooter: string | null;
   colorTarjetas: string | null;
   faviconUrl: string | null;
+  tituloPestana: string | null;
   fuenteTexto: string;
   fuenteTextoUrl: string | null;
   fuenteTitulos: string;

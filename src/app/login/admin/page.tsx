@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -80,6 +81,14 @@ function LoginAdminForm() {
             error={errors.password?.message}
             {...register("password")}
           />
+          <div className="flex justify-end -mt-2">
+            <Link
+              href="/recuperar-password/admin"
+              className="text-xs text-clay-600 hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
           <Button type="submit" disabled={loading} className="mt-2">
             {loading ? "Ingresando..." : "Ingresar"}
           </Button>
