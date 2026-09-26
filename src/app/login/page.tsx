@@ -121,6 +121,7 @@ function LoginClienteForm() {
 // useSearchParams() exige un boundary de Suspense en App Router para
 // poder pre-renderizar la página en el build (si no, "next build" falla
 // con "useSearchParams() should be wrapped in a suspense boundary").
+//
 export default function LoginClientePage() {
   return (
     <Suspense fallback={null}>
