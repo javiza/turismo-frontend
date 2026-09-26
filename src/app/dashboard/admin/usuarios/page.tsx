@@ -102,6 +102,13 @@ type FormClienteEdit = z.infer<typeof schemaClienteEdit>;
 
 function TablaClientes({ q }: { q: string }) {
   const queryClient = useQueryClient();
+  const adminProfile = useSessionStore((s) => s.adminProfile);
+  // Eliminar cliente es definitivo y el backend lo restringe a
+  // SUPER_ADMIN (ver ClientesController.eliminar); un ADMIN normal sí
+  // puede editar/deshabilitar/reactivar clientes. Ocultamos el botón
+  // acá para que no le aparezca una acción que el backend le va a
+  // rechazar con 403.
+  const esSuperAdmin = adminProfile?.rol === "SUPER_ADMIN";
   const [editando, setEditando] = useState<Cliente | null>(null);
 
   const { data: clientes, isLoading } = useQuery({
@@ -288,16 +295,18 @@ function TablaClientes({ q }: { q: string }) {
                             </>
                           )}
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-danger hover:bg-danger/10"
-                          disabled={eliminar.isPending}
-                          onClick={() => handleEliminar(c)}
-                          aria-label="Eliminar cliente definitivamente"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                        {esSuperAdmin && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-danger hover:bg-danger/10"
+                            disabled={eliminar.isPending}
+                            onClick={() => handleEliminar(c)}
+                            aria-label="Eliminar cliente definitivamente"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -575,24 +584,26 @@ function TablaEquipo({ q }: { q: string }) {
                               <Pencil className="size-4" />
                             </Button>
                           )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            disabled={toggleActivo.isPending}
-                            onClick={() => toggleActivo.mutate({ id: u.id, activar: !u.activo })}
-                          >
-                            {u.activo ? (
-                              <>
-                                <UserX className="size-4" />
-                                Deshabilitar
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck className="size-4" />
-                                Reactivar
-                              </>
-                            )}
-                          </Button>
+                          {esSuperAdmin && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={toggleActivo.isPending}
+                              onClick={() => toggleActivo.mutate({ id: u.id, activar: !u.activo })}
+                            >
+                              {u.activo ? (
+                                <>
+                                  <UserX className="size-4" />
+                                  Deshabilitar
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="size-4" />
+                                  Reactivar
+                                </>
+                              )}
+                            </Button>
+                          )}
                           {esSuperAdmin && !esUnoMismo && (
                             <Button
                               size="sm"
