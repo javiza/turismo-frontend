@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Newspaper } from "lucide-react";
 import { ImagenSegura } from "@/components/shared/imagen-segura";
 import { Card } from "@/components/ui/card";
@@ -28,7 +29,16 @@ export function NoticiaDetalleModal({
   noticia: Noticia;
   onClose: () => void;
 }) {
+  // Se monta con un portal a document.body: el widget de noticias que
+  // dispara este modal es flotante (position: fixed con su propio
+  // z-index), así que si el modal se quedara anidado adentro quedaría
+  // atrapado en ESE contexto de apilamiento y el navbar (también fixed/
+  // sticky con z-index propio) podía terminar tapándolo. Portal +
+  // z-index muy alto lo garantiza siempre por encima de todo.
+  const [montado, setMontado] = useState(false);
+
   useEffect(() => {
+    setMontado(true);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -42,9 +52,11 @@ export function NoticiaDetalleModal({
     };
   }, [onClose]);
 
-  return (
+  if (!montado) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink-900/60 sm:p-4"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-ink-900/60 sm:p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -92,6 +104,7 @@ export function NoticiaDetalleModal({
           </div>
         </div>
       </Card>
-    </div>
+    </div>,
+    document.body,
   );
 }
