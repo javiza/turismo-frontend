@@ -16,8 +16,10 @@ import type { Noticia } from "@/types";
  * - Desplegable: el título hace de acordeón para mostrar/ocultar la
  *   lista sin perder el widget de la pantalla; cuando está contraído
  *   queda como una píldora chica para no tapar contenido.
- * - Botón X: si de todos modos estorba, se puede cerrar del todo
- *   (desaparece hasta que se recargue la página).
+ * - Botón X: si de todos modos estorba, se puede cerrar del todo. En
+ *   su lugar queda un botón circular pequeño, en la misma esquina, que
+ *   vuelve a abrir el panel completo con un click (no se pierde del
+ *   todo, solo se reduce a su mínima expresión).
  * - Click en una noticia: abre un modal con la foto grande + la
  *   descripción completa (sin recortar).
  */
@@ -32,7 +34,29 @@ export function NoticiasSidebar({
   const [expandido, setExpandido] = useState(true);
   const [noticiaAbierta, setNoticiaAbierta] = useState<Noticia | null>(null);
 
-  if (noticias.length === 0 || !visible) return null;
+  if (noticias.length === 0) return null;
+
+  // El panel se cerró del todo: dejamos un botón flotante chico, en la
+  // misma esquina, para volver a abrirlo sin recargar la página.
+  if (!visible) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setVisible(true);
+          setExpandido(true);
+        }}
+        aria-label={`Mostrar noticias (${noticias.length})`}
+        title="Mostrar noticias"
+        className="fixed z-40 bottom-3 right-3 sm:bottom-6 sm:right-6 size-14 rounded-full bg-tarjeta-app border border-sun-200 shadow-xl shadow-ink-900/15 flex items-center justify-center text-clay-600 hover:scale-105 transition-transform"
+      >
+        <Newspaper className="size-6" />
+        <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-clay-600 text-white text-[10px] font-semibold px-1">
+          {noticias.length}
+        </span>
+      </button>
+    );
+  }
 
   return (
     <aside
