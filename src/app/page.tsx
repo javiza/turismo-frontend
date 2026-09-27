@@ -235,79 +235,56 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Quiénes somos + Noticias: quedan en la misma sección para que las
-          noticias vayan "a un costado" (columna lateral compacta, solo
-          título y descripción) en vez de ser su propio bloque de ancho
-          completo. */}
-      {(noticias.length > 0 ||
-        (contenido &&
-          (contenido.presentacion || contenido.mision || contenido.vision || contenido.valores))) && (
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
-          <div
-            className={
-              noticias.length > 0 ? "grid lg:grid-cols-[1fr_320px] gap-10 items-start" : ""
-            }
-          >
-            <div>
-              {contenido &&
-                (contenido.presentacion ||
-                  contenido.mision ||
-                  contenido.vision ||
-                  contenido.valores) && (
-                  <>
-                    <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900 mb-8">
-                      Quiénes somos
-                    </h2>
+      {/* Quiénes somos. Las noticias ya no van "a un costado": el widget
+          es flotante (ver NoticiasSidebar más abajo) y acompaña al
+          visitante en toda la página desde que entra, así que se
+          renderiza aparte, fuera de este bloque. */}
+      {contenido &&
+        (contenido.presentacion || contenido.mision || contenido.vision || contenido.valores) && (
+          <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900 mb-8">
+              Quiénes somos
+            </h2>
 
-                    {contenido.presentacion && (
-                      <p className="text-ink-600 max-w-3xl mb-10 leading-relaxed">
-                        {contenido.presentacion}
-                      </p>
-                    )}
+            {contenido.presentacion && (
+              <p className="text-ink-600 max-w-3xl mb-10 leading-relaxed">
+                {contenido.presentacion}
+              </p>
+            )}
 
-                    <div className="grid sm:grid-cols-3 gap-6">
-                      {contenido.mision && (
-                        <Card className="p-6">
-                          <Compass className="size-6 text-clay-600 mb-3" />
-                          <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
-                            Misión
-                          </h3>
-                          <p className="text-sm text-ink-600 leading-relaxed">
-                            {contenido.mision}
-                          </p>
-                        </Card>
-                      )}
-                      {contenido.vision && (
-                        <Card className="p-6">
-                          <Eye className="size-6 text-clay-600 mb-3" />
-                          <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
-                            Visión
-                          </h3>
-                          <p className="text-sm text-ink-600 leading-relaxed">
-                            {contenido.vision}
-                          </p>
-                        </Card>
-                      )}
-                      {contenido.valores && (
-                        <Card className="p-6">
-                          <Heart className="size-6 text-clay-600 mb-3" />
-                          <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
-                            Valores
-                          </h3>
-                          <p className="text-sm text-ink-600 leading-relaxed">
-                            {contenido.valores}
-                          </p>
-                        </Card>
-                      )}
-                    </div>
-                  </>
-                )}
+            <div className="grid sm:grid-cols-3 gap-6">
+              {contenido.mision && (
+                <Card className="p-6">
+                  <Compass className="size-6 text-clay-600 mb-3" />
+                  <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
+                    Misión
+                  </h3>
+                  <p className="text-sm text-ink-600 leading-relaxed">{contenido.mision}</p>
+                </Card>
+              )}
+              {contenido.vision && (
+                <Card className="p-6">
+                  <Eye className="size-6 text-clay-600 mb-3" />
+                  <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
+                    Visión
+                  </h3>
+                  <p className="text-sm text-ink-600 leading-relaxed">{contenido.vision}</p>
+                </Card>
+              )}
+              {contenido.valores && (
+                <Card className="p-6">
+                  <Heart className="size-6 text-clay-600 mb-3" />
+                  <h3 className="font-display text-lg font-semibold text-ink-900 mb-1.5">
+                    Valores
+                  </h3>
+                  <p className="text-sm text-ink-600 leading-relaxed">{contenido.valores}</p>
+                </Card>
+              )}
             </div>
+          </section>
+        )}
 
-            <NoticiasSidebar noticias={noticias} />
-          </div>
-        </section>
-      )}
+      <NoticiasSidebar noticias={noticias} />
 
       {/* Reseñas de clientes (editable desde el panel admin) */}
       {contenido && contenido.resenas.length > 0 && (
