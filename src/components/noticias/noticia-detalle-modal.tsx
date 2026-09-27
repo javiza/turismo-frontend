@@ -76,13 +76,13 @@ export function NoticiaDetalleModal({
         </button>
 
         {noticia.imagenUrl && (
-          <div className="relative h-56 sm:h-72 w-full bg-sun-100 shrink-0">
+          <div className="relative h-56 sm:h-80 w-full bg-ink-900 shrink-0">
             <ImagenSegura
               src={noticia.imagenUrl}
               alt={noticia.titulo}
               fill
               sizes="(max-width: 640px) 100vw, 672px"
-              className="object-cover"
+              className="object-contain"
               priority
             />
           </div>
