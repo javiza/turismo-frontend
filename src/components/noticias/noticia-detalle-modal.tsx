@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Newspaper } from "lucide-react";
 import { ImagenSegura } from "@/components/shared/imagen-segura";
+import { GaleriaLightbox } from "@/components/shared/galeria-lightbox";
 import { Card } from "@/components/ui/card";
 import { NoticiaConsultaBoton } from "@/components/noticias/noticia-consulta-boton";
 import type { Noticia } from "@/types";
@@ -76,16 +77,18 @@ export function NoticiaDetalleModal({
         </button>
 
         {noticia.imagenUrl && (
-          <div className="relative h-56 sm:h-80 w-full bg-ink-900 shrink-0">
-            <ImagenSegura
-              src={noticia.imagenUrl}
-              alt={noticia.titulo}
-              fill
-              sizes="(max-width: 640px) 100vw, 672px"
-              className="object-contain"
-              priority
-            />
-          </div>
+          <GaleriaLightbox imagenPrincipal={noticia.imagenUrl} nombre={noticia.titulo}>
+            <div className="relative h-56 sm:h-80 w-full bg-ink-900 shrink-0 cursor-zoom-in">
+              <ImagenSegura
+                src={noticia.imagenUrl}
+                alt={noticia.titulo}
+                fill
+                sizes="(max-width: 640px) 100vw, 672px"
+                className="object-contain"
+                priority
+              />
+            </div>
+          </GaleriaLightbox>
         )}
 
         <div className="p-5 sm:p-6 flex flex-col gap-3">

@@ -108,8 +108,14 @@ export default async function HomePage() {
           <EmptyState label="Todavía no hay destinos cargados." />
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {destinos.map((d) => (
-              <Card key={d.id} className="overflow-hidden group">
+            {destinos.map((d, i) => (
+              // En celular solo se muestra el primer destino; desde `sm`
+              // (tablet/desktop) se ve la grilla completa. Para ver el resto
+              // en mobile, el usuario usa el link "Ver todos" de arriba.
+              <Card
+                key={d.id}
+                className={`overflow-hidden group ${i > 0 ? "hidden sm:block" : ""}`}
+              >
                 <GaleriaLightbox imagenes={d.imagenes} imagenPrincipal={d.imagenPrincipal} nombre={d.nombre}>
                   <div className="relative h-44 bg-sun-100">
                     {d.imagenPrincipal && (
@@ -158,8 +164,12 @@ export default async function HomePage() {
           <EmptyState label="Todavía no hay paquetes publicados." />
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paquetes.map((p) => (
-              <Card key={p.id} className="overflow-hidden flex flex-col gap-3 p-0">
+            {paquetes.map((p, i) => (
+              // Igual que en destinos: en celular solo el primer paquete.
+              <Card
+                key={p.id}
+                className={`overflow-hidden flex flex-col gap-3 p-0 ${i > 0 ? "hidden sm:flex" : ""}`}
+              >
                 <GaleriaLightbox imagenes={p.imagenes} imagenPrincipal={p.imagenPrincipal} nombre={p.nombre}>
                   <div className="relative h-40 bg-sun-100">
                     {p.imagenPrincipal && (
@@ -198,40 +208,23 @@ export default async function HomePage() {
               Ver todas
             </Link>
           </div>
-          <Carrusel>
-            {ofertas.map((o) => (
-              <CarruselItem key={o.id}>
-                <Card className="overflow-hidden flex flex-col gap-4 border-l-4 border-l-clay-400 h-full p-0">
-                  {(o.imagenPrincipal || (o.imagenes && o.imagenes.length > 0)) && (
-                    <GaleriaLightbox imagenes={o.imagenes} imagenPrincipal={o.imagenPrincipal} nombre={o.titulo}>
-                      <div className="relative h-36 bg-sun-100">
-                        {o.imagenPrincipal && (
-                          <ImagenSegura src={o.imagenPrincipal} alt={o.titulo} fill className="object-cover" />
-                        )}
-                      </div>
-                    </GaleriaLightbox>
-                  )}
-                  <div className="p-6 pt-4 flex flex-col gap-4 flex-1">
-                    <div className="flex items-center gap-4">
-                      <div className="size-11 rounded-full bg-clay-500 text-white flex items-center justify-center shrink-0">
-                        <Percent className="size-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-display text-lg font-semibold text-ink-900">{o.titulo}</h3>
-                        {o.descripcion && <p className="text-sm text-ink-600">{o.descripcion}</p>}
-                        <p className="text-xs text-clay-600 font-medium mt-1">
-                          {Number(o.descuento)}% de descuento
-                        </p>
-                      </div>
-                    </div>
-                    {o.paquete && (
-                      <PaqueteAcciones paqueteId={o.paquete.id} paqueteNombre={o.paquete.nombre} />
-                    )}
-                  </div>
-                </Card>
-              </CarruselItem>
-            ))}
-          </Carrusel>
+          {/* Celular: solo la primera oferta, tarjeta simple sin carrusel
+              (con varias ofertas ocultas el carrusel calcula mal el ancho
+              total y quedan flechas/puntos "de más"). */}
+          <div className="sm:hidden">
+            <OfertaCard oferta={ofertas[0]} />
+          </div>
+
+          {/* Tablet/desktop: carrusel con todas las ofertas, como antes. */}
+          <div className="hidden sm:block">
+            <Carrusel>
+              {ofertas.map((o) => (
+                <CarruselItem key={o.id}>
+                  <OfertaCard oferta={o} />
+                </CarruselItem>
+              ))}
+            </Carrusel>
+          </div>
         </section>
       )}
 
@@ -323,5 +316,39 @@ function EmptyState({ label }: { label: string }) {
     <div className="rounded-card border border-dashed border-sun-300 bg-sun-50/50 py-16 text-center text-ink-400">
       {label}
     </div>
+  );
+}
+
+// Tarjeta de oferta, extraída para poder reusarla tanto en la versión
+// mobile (una sola tarjeta, sin carrusel) como en el carrusel de
+// tablet/desktop, sin duplicar el markup.
+function OfertaCard({ oferta: o }: { oferta: Oferta }) {
+  return (
+    <Card className="overflow-hidden flex flex-col gap-4 border-l-4 border-l-clay-400 h-full p-0">
+      {(o.imagenPrincipal || (o.imagenes && o.imagenes.length > 0)) && (
+        <GaleriaLightbox imagenes={o.imagenes} imagenPrincipal={o.imagenPrincipal} nombre={o.titulo}>
+          <div className="relative h-36 bg-sun-100">
+            {o.imagenPrincipal && (
+              <ImagenSegura src={o.imagenPrincipal} alt={o.titulo} fill className="object-cover" />
+            )}
+          </div>
+        </GaleriaLightbox>
+      )}
+      <div className="p-6 pt-4 flex flex-col gap-4 flex-1">
+        <div className="flex items-center gap-4">
+          <div className="size-11 rounded-full bg-clay-500 text-white flex items-center justify-center shrink-0">
+            <Percent className="size-5" />
+          </div>
+          <div>
+            <h3 className="font-display text-lg font-semibold text-ink-900">{o.titulo}</h3>
+            {o.descripcion && <p className="text-sm text-ink-600">{o.descripcion}</p>}
+            <p className="text-xs text-clay-600 font-medium mt-1">
+              {Number(o.descuento)}% de descuento
+            </p>
+          </div>
+        </div>
+        {o.paquete && <PaqueteAcciones paqueteId={o.paquete.id} paqueteNombre={o.paquete.nombre} />}
+      </div>
+    </Card>
   );
 }
