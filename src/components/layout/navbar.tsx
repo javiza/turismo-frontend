@@ -32,20 +32,20 @@ export function Navbar({
     <header className="sticky top-0 z-40 bg-[var(--color-navbar-app)]/90 backdrop-blur border-b border-sun-200">
       <div className="h-[3px] bg-gradient-to-r from-clay-500 via-sun-400 to-ocean-500" />
       <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-24 sm:h-36 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3 min-w-0">
           {logoUrl && !logoRoto ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
               alt={nombreAgencia}
-              className="h-32 sm:h-[9rem] w-auto max-w-[400px] object-contain"
+              className="h-32 sm:h-[9rem] w-auto max-w-[400px] min-w-0 shrink object-contain"
               onError={() => setLogoRoto(true)}
             />
           ) : (
             <Compass className="size-10 text-clay-600" strokeWidth={1.75} />
           )}
           <span
-            className="text-2xl sm:text-3xl leading-none"
+            className="text-2xl sm:text-3xl leading-none truncate"
             style={{ color: sloganColor, fontFamily: sloganFontFamily }}
           >
             {nombreAgencia}
@@ -108,16 +108,17 @@ export function Navbar({
         </div>
 
         <button
-          className="md:hidden p-2 text-ink-800"
+          className="md:hidden shrink-0 p-2 -mr-2 text-ink-800"
           onClick={() => setOpen((v) => !v)}
-          aria-label="Abrir menú"
+          aria-label={open ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={open}
         >
           {open ? <X className="size-6" /> : <Menu className="size-6" />}
         </button>
       </nav>
 
       {open && (
-        <div className="md:hidden border-t border-sun-100 px-4 py-4 flex flex-col gap-3 bg-[var(--color-navbar-app)]">
+        <div className="md:hidden border-t border-sun-100 px-4 py-3 flex flex-col gap-1 bg-[var(--color-navbar-app)] [&>a]:py-2 [&>button]:py-2">
           <Link href="/destinos" onClick={() => setOpen(false)}>
             Destinos
           </Link>
